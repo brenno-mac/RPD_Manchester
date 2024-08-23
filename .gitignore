@@ -2,3 +2,4 @@ venv
 config.yaml
 dockerhelp.txt
 googlecredentials.json
+__pycache__
