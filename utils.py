@@ -16,7 +16,7 @@ def connect_bigquery():
     return cliente
 
 
-def transform_dfestoque(df, start_date, end_date, name):
+def transform_df_estoque(df, start_date, end_date, name):
     # Converte as datas para o tipo datetime64
         start_date = pd.to_datetime(start_date)
         end_date = pd.to_datetime(end_date)
@@ -38,7 +38,7 @@ def transform_dfestoque(df, start_date, end_date, name):
     
     
     
-def transform_dfinadimplencia(df, start_date, end_date, name):
+def transform_df_inadimplencia(df, start_date, end_date, name):
     # Converte as datas para o tipo datetime64
         start_date = pd.to_datetime(start_date)
         end_date = pd.to_datetime(end_date)
@@ -59,9 +59,9 @@ def transform_dfinadimplencia(df, start_date, end_date, name):
             pass
         return df
     
-def transform_dfcontatos(df, name):
+def transform_df_contatos(df, name):
     df['codparc'] = df['codparc'].astype(str)
-    df.rename(columns={'codparc':'Código Parceiro', 'apelido':'Vendedor', 'nomeparc':'Nome do Parceiro', 'contato_feito':'Entrou em Contato?', 'cotacao_feita':'Cotou?', 'contactou_ou_nao':'Fez contato esse mês?', 'ult_tele':'Último Telemarketing', 'ult_cotacao':'Última Cotação'}, inplace = True)
+    df.rename(columns={'codparc':'Código Parceiro', 'apelido':'Vendedor', 'nomeparc':'Nome do Parceiro', 'contato_feito':'Entrou em Contato?', 'cotacao_feita':'Cotou?', 'contactou_ou_nao':'Fez contato esse mês?', 'ult_tele':'Último Telemarketing', 'ult_cotacao':'Última Cotação', 'ult_venda':'Última Venda', 'venda_feita':'Vendeu?'}, inplace = True)
     if name != 'Gerência':
         df = df[df['Vendedor'] == name.upper()]
         df.drop(columns = ['Vendedor'], inplace = True)

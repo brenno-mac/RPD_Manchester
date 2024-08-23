@@ -7,7 +7,7 @@ import pandas_gbq
 import datetime
 import yaml
 from yaml.loader import SafeLoader
-from utils import connect_bigquery, transform_dfestoque, transform_dfinadimplencia, transform_dfcontatos
+from utils import connect_bigquery
 from queries import query_estoque, query_inadimplencia, query_contatos
 from pages import BasePage, RelatorioEstoquePage, RelatorioInadimplenciaPage, RelatorioContatosPage, PageManager
 
@@ -15,6 +15,15 @@ from pages import BasePage, RelatorioEstoquePage, RelatorioInadimplenciaPage, Re
 # Configurações iniciais e autenticação
 today = datetime.date.today()
 thirty_days_ago = today - datetime.timedelta(days=30)
+six_months_ago = today - datetime.timedelta(days=180)
+
+
+first_day_of_current_month = today.replace(day=1)
+
+# Subtrair um dia para obter o último dia do mês passado
+last_day_of_previous_month = first_day_of_current_month - datetime.timedelta(days=1)
+
+print(last_day_of_previous_month)
 
 project_id = 'manchester-ai'
 
@@ -50,8 +59,8 @@ if authentication_status:
     
     # Criação e gerenciamento de páginas
     page_manager = PageManager(thirty_days_ago, today, name)
-    page_manager.add_page("Relatório de Estoque", RelatorioEstoquePage(df_estoque, thirty_days_ago, today, name))
-    page_manager.add_page("Relatório de Inadimplência", RelatorioInadimplenciaPage(df_inadimplencia, thirty_days_ago, today, name))
+    page_manager.add_page("Cotações com falta de Estoque", RelatorioEstoquePage(df_estoque, thirty_days_ago, today, name))
+    page_manager.add_page("Relatório de Inadimplência", RelatorioInadimplenciaPage(df_inadimplencia, six_months_ago, last_day_of_previous_month, name))
     page_manager.add_page("Relatório de Contatos", RelatorioContatosPage(df_contatos, name))
     
     # Seleção e renderização da página
@@ -63,3 +72,30 @@ elif authentication_status == False:
 
 elif authentication_status == None:
     st.warning("Por favor, insira seu usuário e senha")
+
+
+
+
+
+
+
+#Cotações com falta de estoque - mudar a lógica para mostrar as quantidades na unidade cotada, não apenas em KG
+#Adicionar coluna com 'matéria prima alternativa'
+#Como o nome mudou, ver com Felipe potencial mudança da descrição
+
+#Relatório de Inadimplência - trocar o valor da nota pelo valor da parcela
+
+
+#Relatório de contatos - cortar os campos de confirmação da visão dos vendedores
+#Implementar relatório especial para gerência, com agregados resumindo a situação de cada vendedor
+
+# Vendedor - Carteira(qtd) - Já entrou em contato - Já cotou - Já vendeu - Qtos faltam - Ritmo - Pct
+
+
+
+
+# Outro relatório com filtro de vendedor, filtro de contato, filtro de cotação, filtro de venda feita na carteira
+
+
+
+

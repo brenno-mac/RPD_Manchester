@@ -1,5 +1,5 @@
 import streamlit as st
-from utils import transform_dfestoque, transform_dfinadimplencia, transform_dfcontatos
+from utils import transform_df_estoque, transform_df_inadimplencia, transform_df_contatos
 
 
 class PageManager:
@@ -36,12 +36,12 @@ class BasePage:
     
 class RelatorioEstoquePage(BasePage):
     def __init__(self, df, start_date, end_date, user_name):
-        super().__init__("Relatório de Estoque", start_date, end_date, user_name)
+        super().__init__("Cotações com falta de Estoque", start_date, end_date, user_name)
         self.df = df
 
     def render(self):
         start_date, end_date = self.filter_dates()
-        df_transformed = transform_dfestoque(self.df, start_date, end_date, self.user_name)
+        df_transformed = transform_df_estoque(self.df, start_date, end_date, self.user_name)
         st.title(self.title)
         if self.user_name == 'Gerência':
             st.write(f"Abaixo está o relatório de estoque em nível gerencial:")
@@ -60,7 +60,7 @@ class RelatorioInadimplenciaPage(BasePage):
 
     def render(self):
         start_date, end_date = self.filter_dates()
-        df_transformed = transform_dfinadimplencia(self.df, start_date, end_date, self.user_name)
+        df_transformed = transform_df_inadimplencia(self.df, start_date, end_date, self.user_name)
         st.title(self.title)
         if self.user_name == 'Gerência':
             st.write("Abaixo está o relatório de inadimplência em nível gerencial:")
@@ -78,7 +78,7 @@ class RelatorioContatosPage(BasePage):
         self.df = df
 
     def render(self):
-        df_transformed = transform_dfcontatos(self.df, self.user_name)
+        df_transformed = transform_df_contatos(self.df, self.user_name)
         st.title(self.title)
         if self.user_name == 'Gerência':
             st.write(f"Abaixo está o relatório de contatos em nível gerencial:")
@@ -87,6 +87,7 @@ class RelatorioContatosPage(BasePage):
         st.dataframe(df_transformed,
                      column_config={
                          "Último Telemarketing" : st.column_config.DateColumn(label="Último Telemarketing", format="DD/MM/YYYY"),
-                         "Última Cotação" : st.column_config.DateColumn(label="Última Cotação", format="DD/MM/YYYY")
+                         "Última Cotação" : st.column_config.DateColumn(label="Última Cotação", format="DD/MM/YYYY"),
+                         "Última Venda" : st.column_config.DateColumn(label="Última Venda", format="DD/MM/YYYY")
                      },
                      hide_index=True)
