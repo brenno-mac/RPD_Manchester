@@ -32,6 +32,9 @@ class BasePage:
     def filter_dates(self):
         return st.sidebar.date_input(label="Período", value=[self.start_date, self.end_date])
     
+    def select_box(self, label, options, placeholder):
+        return st.sidebar.selectbox(label = label, options = (options), index=None, placeholder = placeholder)
+
     
     
 class RelatorioEstoquePage(BasePage):
@@ -78,7 +81,11 @@ class RelatorioContatosPage(BasePage):
         self.df = df
 
     def render(self):
-        df_transformed = transform_df_contatos(self.df, self.user_name)
+        selectbox_vendedor = self.select_box(label = "Escolha um vendedor", options = self.df['apelido'].unique(), placeholder = "Selecione o vendedor")
+        selectbox_telemarketing = self.select_box(label = "Telemarketing?", options = self.df['telemarketing_feito'].unique(), placeholder = "Selecione se houve telemarketing")
+        selectbox_cotacao = self.select_box(label = "Cotou?", options = self.df['cotacao_feita'].unique(), placeholder = "Selecione se houve cotação")
+        selectbox_venda = self.select_box(label = "Vendeu?", options = self.df['venda_feita'].unique(), placeholder = "Selecione se houve venda")
+        df_transformed = transform_df_contatos(self.df, self.user_name, selectbox_vendedor, selectbox_telemarketing, selectbox_cotacao, selectbox_venda)
         st.title(self.title)
         if self.user_name == 'Gerência':
             st.write(f"Abaixo está o relatório de contatos em nível gerencial:")

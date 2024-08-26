@@ -60,12 +60,19 @@ def transform_df_inadimplencia(df, start_date, end_date, name):
             pass
         return df
     
-def transform_df_contatos(df, name):
+def transform_df_contatos(df, name, selectbox_vendedor, selectbox_telemarketing, selectbox_cotacao, selectbox_venda):
     df['codparc'] = df['codparc'].astype(str)
-    df.rename(columns={'codparc':'Código Parceiro', 'apelido':'Vendedor', 'nomeparc':'Nome do Parceiro', 'contato_feito':'Entrou em Contato?', 'cotacao_feita':'Cotou?', 'contactou_ou_nao':'Fez contato esse mês?', 'ult_tele':'Último Telemarketing', 'ult_cotacao':'Última Cotação', 'ult_venda':'Última Venda', 'venda_feita':'Vendeu?'}, inplace = True)
+    df.rename(columns={'codparc':'Código Parceiro', 'apelido':'Vendedor', 'nomeparc':'Nome do Parceiro', 'telemarketing_feito':'Fez telemarketing?', 'cotacao_feita':'Cotou?', 'contactou_ou_nao':'Fez contato esse mês?', 'ult_tele':'Último Telemarketing', 'ult_cotacao':'Última Cotação', 'ult_venda':'Última Venda', 'venda_feita':'Vendeu?'}, inplace = True)
     if name != 'Gerência':
         df = df[(df['Fez contato esse mês?'] == 'Não contactou') & (df['Vendedor'] == name.upper())]
-        df.drop(columns = ['Vendedor', 'Cotou?', 'Entrou em Contato?', 'Fez contato esse mês?', 'Vendeu?'], inplace = True)
+        df.drop(columns = ['Vendedor', 'Cotou?', 'Fez telemarketing?', 'Fez contato esse mês?', 'Vendeu?'], inplace = True)
     else:
-        pass
+        if selectbox_vendedor:
+            df = df[df['Vendedor'] == selectbox_vendedor]
+        if selectbox_telemarketing:
+            df = df[df['Fez telemarketing?'] == selectbox_telemarketing]
+        if selectbox_cotacao:
+            df = df[df['Cotou?'] == selectbox_cotacao]
+        if selectbox_venda:
+            df = df[df['Vendeu?'] == selectbox_venda]
     return df

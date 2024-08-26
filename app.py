@@ -92,8 +92,3 @@ elif authentication_status == None:
 
 
 
-# Outro relatório com filtro de vendedor, filtro de contato, filtro de cotação, filtro de venda feita na carteira
-
-
-
-
