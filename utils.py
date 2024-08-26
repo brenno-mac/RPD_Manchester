@@ -47,11 +47,12 @@ def transform_df_inadimplencia(df, start_date, end_date, name):
     # Filtra o DataFrame pelas datas escolhidas
         df = df[(df['data_de_vencimento'] >= start_date) & (df['data_de_vencimento'] <= end_date)]
     
-        df = format_numbers_br(df = df, cols = ['valor_da_nota'])
+        df = format_numbers_br(df = df, cols = ['valor_da_nota', 'valor_parcela'])
         df['numero_da_nota'] = df['numero_da_nota'].astype(str)
         df['codigo_parceiro'] = df['codigo_parceiro'].astype(str)
         df['dias_vencidos'] = df['dias_vencidos'].astype(int)
-        df.rename(columns={'codigo_parceiro':'Código Parceiro', 'nome_parceiro':'Nome Parceiro', 'vendedor':'Vendedor', 'data_de_vencimento':'Data de Vencimento', 'numero_da_nota':'N. da Nota', 'valor_da_nota':'Valor da Nota(R$)', 'descricao_oper':'Descrição da Operação', 'numero_parcela':'N. da Parcela', 'tipo_de_titulo':'Tipo de Título', 'dias_vencidos':'Dias Vencidos'}, inplace = True)
+        df.rename(columns={'codigo_parceiro':'Código Parceiro', 'nome_parceiro':'Nome Parceiro', 'vendedor':'Vendedor', 'data_de_vencimento':'Data de Vencimento', 'numero_da_nota':'N. da Nota', 'valor_da_nota':'Valor da Nota(R$)', 'descricao_oper':'Descrição da Operação', 'numero_parcela':'N. da Parcela', 'tipo_de_titulo':'Tipo de Título', 'dias_vencidos':'Dias Vencidos', 'valor_parcela':'Valor da Parcela(R$)'}, inplace = True)
+        df.drop(columns=['Valor da Nota(R$)'], inplace=True)
         if name != 'Gerência':
             df = df[df['Vendedor'] == name.upper()]
             df.drop(columns = ['Vendedor'], inplace = True)
@@ -63,8 +64,8 @@ def transform_df_contatos(df, name):
     df['codparc'] = df['codparc'].astype(str)
     df.rename(columns={'codparc':'Código Parceiro', 'apelido':'Vendedor', 'nomeparc':'Nome do Parceiro', 'contato_feito':'Entrou em Contato?', 'cotacao_feita':'Cotou?', 'contactou_ou_nao':'Fez contato esse mês?', 'ult_tele':'Último Telemarketing', 'ult_cotacao':'Última Cotação', 'ult_venda':'Última Venda', 'venda_feita':'Vendeu?'}, inplace = True)
     if name != 'Gerência':
-        df = df[df['Vendedor'] == name.upper()]
-        df.drop(columns = ['Vendedor'], inplace = True)
+        df = df[(df['Fez contato esse mês?'] == 'Não contactou') & (df['Vendedor'] == name.upper())]
+        df.drop(columns = ['Vendedor', 'Cotou?', 'Entrou em Contato?', 'Fez contato esse mês?', 'Vendeu?'], inplace = True)
     else:
         pass
     return df

@@ -83,10 +83,8 @@ elif authentication_status == None:
 #Adicionar coluna com 'matéria prima alternativa'
 #Como o nome mudou, ver com Felipe potencial mudança da descrição
 
-#Relatório de Inadimplência - trocar o valor da nota pelo valor da parcela
 
-
-#Relatório de contatos - cortar os campos de confirmação da visão dos vendedores
+#Relatório de contatos 
 #Implementar relatório especial para gerência, com agregados resumindo a situação de cada vendedor
 
 # Vendedor - Carteira(qtd) - Já entrou em contato - Já cotou - Já vendeu - Qtos faltam - Ritmo - Pct
