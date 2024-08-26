@@ -1,5 +1,5 @@
 import streamlit as st
-from utils import transform_df_estoque, transform_df_inadimplencia, transform_df_contatos
+from utils import transform_df_estoque, transform_df_inadimplencia, transform_df_contatos, transform_df_contatosagregados
 
 
 class PageManager:
@@ -9,15 +9,16 @@ class PageManager:
         self.end_date = end_date
         self.user_name = user_name
 
-    def add_page(self, name, page):
-        self.pages[name] = page
+    def add_page(self, name, page, allowed_users=None):
+        if allowed_users is None or self.user_name in allowed_users:
+            self.pages[name] = page
 
     def render(self, page_name):
         page = self.pages.get(page_name)
         if page:
             page.render()
         else:
-            st.error(f"Página '{page_name}' não encontrada.")
+            st.error(f"Página '{page_name}' não encontrada ou você não tem permissão para acessá-la.")
 
 class BasePage:
     def __init__(self, title, start_date, end_date, user_name):
@@ -37,7 +38,7 @@ class BasePage:
 
     
     
-class RelatorioEstoquePage(BasePage):
+class Relatorio_Estoque_Page(BasePage):
     def __init__(self, df, start_date, end_date, user_name):
         super().__init__("Cotações com falta de Estoque", start_date, end_date, user_name)
         self.df = df
@@ -56,7 +57,7 @@ class RelatorioEstoquePage(BasePage):
                      },
                     hide_index=True)
         
-class RelatorioInadimplenciaPage(BasePage):
+class Relatorio_Inadimplencia_Page(BasePage):
     def __init__(self, df, start_date, end_date, user_name):
         super().__init__("Relatório de Inadimplência", start_date, end_date, user_name)
         self.df = df
@@ -75,26 +76,59 @@ class RelatorioInadimplenciaPage(BasePage):
                      },
                      hide_index=True)
 
-class RelatorioContatosPage(BasePage):
+class Relatorio_Contatos_Page(BasePage):
     def __init__(self, df, user_name):
         super().__init__("Relatório de Contatos", None, None, user_name)
         self.df = df
 
     def render(self):
-        selectbox_vendedor = self.select_box(label = "Escolha um vendedor", options = self.df['apelido'].unique(), placeholder = "Selecione o vendedor")
-        selectbox_telemarketing = self.select_box(label = "Telemarketing?", options = self.df['telemarketing_feito'].unique(), placeholder = "Selecione se houve telemarketing")
-        selectbox_cotacao = self.select_box(label = "Cotou?", options = self.df['cotacao_feita'].unique(), placeholder = "Selecione se houve cotação")
-        selectbox_venda = self.select_box(label = "Vendeu?", options = self.df['venda_feita'].unique(), placeholder = "Selecione se houve venda")
-        df_transformed = transform_df_contatos(self.df, self.user_name, selectbox_vendedor, selectbox_telemarketing, selectbox_cotacao, selectbox_venda)
         st.title(self.title)
         if self.user_name == 'Gerência':
             st.write(f"Abaixo está o relatório de contatos em nível gerencial:")
+
+            # Filtros para o usuário "Gerência"
+            selectbox_vendedor = self.select_box(label="Escolha um vendedor", options=self.df['apelido'].unique(), placeholder="Selecione o vendedor")
+            selectbox_telemarketing = self.select_box(label="Telemarketing?", options=self.df['telemarketing_feito'].unique(), placeholder="Selecione se houve telemarketing")
+            selectbox_cotacao = self.select_box(label="Cotou?", options=self.df['cotacao_feita'].unique(), placeholder="Selecione se houve cotação")
+            selectbox_venda = self.select_box(label="Vendeu?", options=self.df['venda_feita'].unique(), placeholder="Selecione se houve venda")
         else:
             st.write(f"Abaixo está o relatório de contatos para a vendedora {self.user_name}:")
+            selectbox_vendedor = None
+            selectbox_telemarketing = None
+            selectbox_cotacao = None
+            selectbox_venda = None
+            # Adiciona o cálculo de métricas se o usuário não for "Gerência"
+            st.metric(label="Contatos Feitos, em %", value=f"{(len(self.df[(self.df['apelido'] == self.user_name.upper()) & (self.df['contactou_ou_nao'] == 'Contato feito')]))/(len(self.df[self.df['apelido'] == self.user_name.upper()])) * 100} %")
+
+        # Transforma o dataframe usando os filtros (se existirem)
+        df_transformed = transform_df_contatos(self.df, self.user_name, selectbox_vendedor, selectbox_telemarketing, selectbox_cotacao, selectbox_venda)
+        
         st.dataframe(df_transformed,
                      column_config={
-                         "Último Telemarketing" : st.column_config.DateColumn(label="Último Telemarketing", format="DD/MM/YYYY"),
-                         "Última Cotação" : st.column_config.DateColumn(label="Última Cotação", format="DD/MM/YYYY"),
-                         "Última Venda" : st.column_config.DateColumn(label="Última Venda", format="DD/MM/YYYY")
+                         "Último Telemarketing": st.column_config.DateColumn(label="Último Telemarketing", format="DD/MM/YYYY"),
+                         "Última Cotação": st.column_config.DateColumn(label="Última Cotação", format="DD/MM/YYYY"),
+                         "Última Venda": st.column_config.DateColumn(label="Última Venda", format="DD/MM/YYYY")
                      },
                      hide_index=True)
+
+        
+        
+class Relatorio_ContatosAgregados_Page(BasePage):
+    def __init__(self, df, user_name):
+        super().__init__("Relatório de Contatos - Agregado", None, None, user_name)
+        self.df = df
+
+    def render(self):
+        df_transformed = transform_df_contatosagregados(self.df, self.user_name)
+        st.title(self.title)
+        if self.user_name == 'Gerência':
+            st.write(f"Abaixo está o relatório de contatos agregados em nível gerencial:")
+        else:
+            st.write(f"Abaixo está o relatório de contatos agregados para a vendedora {self.user_name}:")
+        st.dataframe(df_transformed,
+                     hide_index=True)
+        
+        
+        
+        
+        

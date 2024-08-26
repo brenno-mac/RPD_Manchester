@@ -9,7 +9,7 @@ import yaml
 from yaml.loader import SafeLoader
 from utils import connect_bigquery
 from queries import query_estoque, query_inadimplencia, query_contatos
-from pages import BasePage, RelatorioEstoquePage, RelatorioInadimplenciaPage, RelatorioContatosPage, PageManager
+from pages import BasePage, Relatorio_Estoque_Page, Relatorio_Inadimplencia_Page, Relatorio_Contatos_Page, PageManager, Relatorio_ContatosAgregados_Page
 
 
 # Configurações iniciais e autenticação
@@ -59,9 +59,10 @@ if authentication_status:
     
     # Criação e gerenciamento de páginas
     page_manager = PageManager(thirty_days_ago, today, name)
-    page_manager.add_page("Cotações com falta de Estoque", RelatorioEstoquePage(df_estoque, thirty_days_ago, today, name))
-    page_manager.add_page("Relatório de Inadimplência", RelatorioInadimplenciaPage(df_inadimplencia, six_months_ago, last_day_of_previous_month, name))
-    page_manager.add_page("Relatório de Contatos", RelatorioContatosPage(df_contatos, name))
+    page_manager.add_page("Cotações com falta de Estoque", Relatorio_Estoque_Page(df_estoque, thirty_days_ago, today, name))
+    page_manager.add_page("Relatório de Inadimplência", Relatorio_Inadimplencia_Page(df_inadimplencia, six_months_ago, last_day_of_previous_month, name))
+    page_manager.add_page("Relatório de Contatos", Relatorio_Contatos_Page(df_contatos, name))
+    page_manager.add_page("Relatório de Contatos - Agregado", Relatorio_ContatosAgregados_Page(df_contatos, name), allowed_users=["Gerência"])
     
     # Seleção e renderização da página
     selected_page = st.sidebar.selectbox("Selecione a Página", list(page_manager.pages.keys()))
@@ -82,13 +83,4 @@ elif authentication_status == None:
 #Cotações com falta de estoque - mudar a lógica para mostrar as quantidades na unidade cotada, não apenas em KG
 #Adicionar coluna com 'matéria prima alternativa'
 #Como o nome mudou, ver com Felipe potencial mudança da descrição
-
-
-#Relatório de contatos 
-#Implementar relatório especial para gerência, com agregados resumindo a situação de cada vendedor
-
-# Vendedor - Carteira(qtd) - Já entrou em contato - Já cotou - Já vendeu - Qtos faltam - Ritmo - Pct
-
-
-
 
