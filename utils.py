@@ -82,15 +82,21 @@ def transform_df_contatos(df, name, selectbox_vendedor, selectbox_telemarketing,
 def transform_df_contatosagregados(df, name):
     # df['codparc'] = df['codparc'].astype(str)
     # df.rename(columns={'codparc':'Código Parceiro', 'apelido':'Vendedor', 'nomeparc':'Nome do Parceiro', 'telemarketing_feito':'Fez telemarketing?', 'cotacao_feita':'Cotou?', 'contactou_ou_nao':'Fez contato esse mês?', 'ult_tele':'Último Telemarketing', 'ult_cotacao':'Última Cotação', 'ult_venda':'Última Venda', 'venda_feita':'Vendeu?'}, inplace = True)
+    # df = df[~df['tempo_ultima_venda'].isna()]
+    # df = df[df['tempo_ultima_venda'] < 90]
     df_agrupado = df.groupby('apelido').agg(
         Carteira=('codparc', 'size'),
         Contatos=('contactou_ou_nao', lambda x: (x == 'Contato feito').sum()),
         Fez_telemarketing=('telemarketing_feito', lambda x: (x == 'Entrou em contato esse mês').sum()),
         Cotou=('cotacao_feita', lambda x: (x == 'Cotou esse mês').sum()),
         Vendeu=('venda_feita', lambda x: (x == 'Vendeu esse mês').sum()),
+        Ultima_Venda=('tempo_ultima_venda', 'min')
         )
+    df_agrupado = df_agrupado[(df_agrupado['Ultima_Venda'].notna() | df_agrupado['Ultima_Venda'] < 90) & (df_agrupado['Contatos'] != 0)]
+    df_agrupado.drop(columns = ['Ultima_Venda'], inplace = True)
     df_agrupado['Faltam contatos'] = df_agrupado['Carteira'] - df_agrupado['Contatos']
     df_agrupado['Pct'] = (df_agrupado['Contatos'] / df_agrupado['Carteira']) * 100
     df_agrupado = df_agrupado.reset_index()
     df_agrupado.rename(columns = {'apelido':'Vendedor', 'Fez_telemarketing':'Fez telemarketing', }, inplace = True)
+    df_agrupado.sort_values(by='Pct', ascending = False, inplace = True)
     return df_agrupado

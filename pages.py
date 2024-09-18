@@ -98,8 +98,10 @@ class Relatorio_Contatos_Page(BasePage):
             selectbox_cotacao = None
             selectbox_venda = None
             # Adiciona o cálculo de métricas se o usuário não for "Gerência"
-            st.metric(label="Contatos Feitos, em %", value=f"{(len(self.df[(self.df['apelido'] == self.user_name.upper()) & (self.df['contactou_ou_nao'] == 'Contato feito')]))/(len(self.df[self.df['apelido'] == self.user_name.upper()])) * 100} %")
-
+            if round((len(self.df[(self.df['apelido'] == self.user_name.upper()) & (self.df['contactou_ou_nao'] == 'Contato feito')]))/(len(self.df[self.df['apelido'] == self.user_name.upper()])) * 100, 2) == 100:
+                st.metric(label="", value="Parabéns, meta batida!")
+            else:
+                st.metric(label="Contatos Feitos, em %", value=f"{round((len(self.df[(self.df['apelido'] == self.user_name.upper()) & (self.df['contactou_ou_nao'] == 'Contato feito')]))/(len(self.df[self.df['apelido'] == self.user_name.upper()])) * 100, 2)} %")
         # Transforma o dataframe usando os filtros (se existirem)
         df_transformed = transform_df_contatos(self.df, self.user_name, selectbox_vendedor, selectbox_telemarketing, selectbox_cotacao, selectbox_venda)
         

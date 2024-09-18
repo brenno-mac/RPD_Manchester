@@ -82,5 +82,4 @@ elif authentication_status == None:
 
 #Cotações com falta de estoque - mudar a lógica para mostrar as quantidades na unidade cotada, não apenas em KG
 #Adicionar coluna com 'matéria prima alternativa'
-#Como o nome mudou, ver com Felipe potencial mudança da descrição
 
