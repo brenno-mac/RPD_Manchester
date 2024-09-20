@@ -100,3 +100,10 @@ def transform_df_contatosagregados(df, name):
     df_agrupado.rename(columns = {'apelido':'Vendedor', 'Fez_telemarketing':'Fez telemarketing', }, inplace = True)
     df_agrupado.sort_values(by='Pct', ascending = False, inplace = True)
     return df_agrupado
+
+
+# inadimplencia -- histórico(descrição dada pelo usuário)
+
+# contatos -- conversao(%) e novos clientes
+
+# estoque -- separar por gerencia(filtro) - código do produto

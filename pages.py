@@ -1,6 +1,11 @@
 import streamlit as st
 from utils import transform_df_estoque, transform_df_inadimplencia, transform_df_contatos, transform_df_contatosagregados
+from io import BytesIO
+import pandas as pd
 
+from datetime import datetime
+
+today = datetime.now()
 
 class PageManager:
     def __init__(self, start_date, end_date, user_name):
@@ -43,9 +48,19 @@ class Relatorio_Estoque_Page(BasePage):
         super().__init__("Cotações com falta de Estoque", start_date, end_date, user_name)
         self.df = df
 
+    def to_excel(self, df):
+        # Criando um buffer de Bytes para o arquivo Excel
+        output = BytesIO()
+        with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
+            df.to_excel(writer, index=False, sheet_name='Relatório')
+        # Movendo o cursor para o início do buffer
+        output.seek(0)
+        return output
+
     def render(self):
         start_date, end_date = self.filter_dates()
         df_transformed = transform_df_estoque(self.df, start_date, end_date, self.user_name)
+        excel_data = self.to_excel(df_transformed)
         st.title(self.title)
         if self.user_name == 'Gerência':
             st.write(f"Abaixo está o relatório de estoque em nível gerencial:")
@@ -56,15 +71,31 @@ class Relatorio_Estoque_Page(BasePage):
                         "Data Cotada": st.column_config.DateColumn(label="Data Cotada", format="DD/MM/YYYY")                            
                      },
                     hide_index=True)
+        st.download_button(
+            label="Baixar relatório em Excel",
+            data=excel_data,
+            file_name=f'relatorio_estoque{today.year}{today.month}{today.day}.xlsx',
+            mime='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        )
         
 class Relatorio_Inadimplencia_Page(BasePage):
     def __init__(self, df, start_date, end_date, user_name):
         super().__init__("Relatório de Inadimplência", start_date, end_date, user_name)
         self.df = df
 
+    def to_excel(self, df):
+        # Criando um buffer de Bytes para o arquivo Excel
+        output = BytesIO()
+        with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
+            df.to_excel(writer, index=False, sheet_name='Relatório')
+        # Movendo o cursor para o início do buffer
+        output.seek(0)
+        return output
+
     def render(self):
         start_date, end_date = self.filter_dates()
         df_transformed = transform_df_inadimplencia(self.df, start_date, end_date, self.user_name)
+        excel_data = self.to_excel(df_transformed)
         st.title(self.title)
         if self.user_name == 'Gerência':
             st.write("Abaixo está o relatório de inadimplência em nível gerencial:")
@@ -75,11 +106,26 @@ class Relatorio_Inadimplencia_Page(BasePage):
                          "Data de Vencimento" : st.column_config.DateColumn(label="Data de Vencimento", format="DD/MM/YYYY")
                      },
                      hide_index=True)
+        st.download_button(
+            label="Baixar relatório em Excel",
+            data=excel_data,
+            file_name=f'relatorio_inadimplencia{today.year}{today.month}{today.day}.xlsx',
+            mime='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        )
 
 class Relatorio_Contatos_Page(BasePage):
     def __init__(self, df, user_name):
         super().__init__("Relatório de Contatos", None, None, user_name)
         self.df = df
+
+    def to_excel(self, df):
+        # Criando um buffer de Bytes para o arquivo Excel
+        output = BytesIO()
+        with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
+            df.to_excel(writer, index=False, sheet_name='Relatório')
+        # Movendo o cursor para o início do buffer
+        output.seek(0)
+        return output
 
     def render(self):
         st.title(self.title)
@@ -105,6 +151,8 @@ class Relatorio_Contatos_Page(BasePage):
         # Transforma o dataframe usando os filtros (se existirem)
         df_transformed = transform_df_contatos(self.df, self.user_name, selectbox_vendedor, selectbox_telemarketing, selectbox_cotacao, selectbox_venda)
         
+        excel_data = self.to_excel(df_transformed)
+        
         st.dataframe(df_transformed,
                      column_config={
                          "Último Telemarketing": st.column_config.DateColumn(label="Último Telemarketing", format="DD/MM/YYYY"),
@@ -112,13 +160,28 @@ class Relatorio_Contatos_Page(BasePage):
                          "Última Venda": st.column_config.DateColumn(label="Última Venda", format="DD/MM/YYYY")
                      },
                      hide_index=True)
-
+        st.download_button(
+            label="Baixar relatório em Excel",
+            data=excel_data,
+            file_name=f'relatorio_contatos{today.year}{today.month}{today.day}.xlsx',
+            mime='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        )
+        
         
         
 class Relatorio_ContatosAgregados_Page(BasePage):
     def __init__(self, df, user_name):
         super().__init__("Relatório de Contatos - Agregado", None, None, user_name)
         self.df = df
+
+    def to_excel(self, df):
+        # Criando um buffer de Bytes para o arquivo Excel
+        output = BytesIO()
+        with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
+            df.to_excel(writer, index=False, sheet_name='Relatório')
+        # Movendo o cursor para o início do buffer
+        output.seek(0)
+        return output
 
     def render(self):
         df_transformed = transform_df_contatosagregados(self.df, self.user_name)
@@ -130,7 +193,14 @@ class Relatorio_ContatosAgregados_Page(BasePage):
         st.dataframe(df_transformed,
                      hide_index=True)
         
+        excel_data = self.to_excel(df_transformed)
         
+        st.download_button(
+            label="Baixar relatório em Excel",
+            data=excel_data,
+            file_name=f'relatorio_contatos_agregados{today.year}{today.month}{today.day}.xlsx',
+            mime='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        )
         
         
         
