@@ -100,10 +100,14 @@ class Relatorio_Inadimplencia_Page(BasePage):
         df_transformed = transform_df_inadimplencia(self.df, start_date, end_date, self.user_name, checkbox_90_days)
         excel_data = self.to_excel(df_transformed)
         st.title(self.title)
+        df_transformed['Valor da Parcela(R$)'] = df_transformed['Valor da Parcela(R$)'].str.replace('.', '').str.replace(',', '.').astype(float)
+
+        total_valor = df_transformed['Valor da Parcela(R$)'].sum()
         if self.user_name == 'Gerência':
             st.write("Abaixo está o relatório de inadimplência em nível gerencial:")
         else:
             st.write(f"Abaixo está o relatório de inadimplência para a vendedora {self.user_name}:")
+            st.write(f"Você tem um total de {len(df_transformed)} notas inadimplentes, com um valor total de {round(total_valor,2)} R$.")
         st.dataframe(df_transformed, 
                      column_config={
                          "Data de Vencimento" : st.column_config.DateColumn(label="Data de Vencimento", format="DD/MM/YYYY")
