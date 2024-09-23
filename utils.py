@@ -51,7 +51,7 @@ def transform_df_inadimplencia(df, start_date, end_date, name):
         df['numero_da_nota'] = df['numero_da_nota'].astype(str)
         df['codigo_parceiro'] = df['codigo_parceiro'].astype(str)
         df['dias_vencidos'] = df['dias_vencidos'].astype(int)
-        df.rename(columns={'codigo_parceiro':'Código Parceiro', 'nome_parceiro':'Nome Parceiro', 'vendedor':'Vendedor', 'data_de_vencimento':'Data de Vencimento', 'numero_da_nota':'N. da Nota', 'valor_da_nota':'Valor da Nota(R$)', 'descricao_oper':'Descrição da Operação', 'numero_parcela':'N. da Parcela', 'tipo_de_titulo':'Tipo de Título', 'dias_vencidos':'Dias Vencidos', 'valor_parcela':'Valor da Parcela(R$)'}, inplace = True)
+        df.rename(columns={'codigo_parceiro':'Código Parceiro', 'nome_parceiro':'Nome Parceiro', 'vendedor':'Vendedor', 'data_de_vencimento':'Data de Vencimento', 'numero_da_nota':'N. da Nota', 'valor_da_nota':'Valor da Nota(R$)', 'descricao_oper':'Descrição da Operação', 'numero_parcela':'N. da Parcela', 'tipo_de_titulo':'Tipo de Título', 'dias_vencidos':'Dias Vencidos', 'valor_parcela':'Valor da Parcela(R$)', 'historico':'Histórico', 'codemp':'Empresa'}, inplace = True)
         df.drop(columns=['Valor da Nota(R$)'], inplace=True)
         if name != 'Gerência':
             df = df[df['Vendedor'] == name.upper()]
@@ -102,8 +102,3 @@ def transform_df_contatosagregados(df, name):
     return df_agrupado
 
 
-# inadimplencia -- histórico(descrição dada pelo usuário)
-
-# contatos -- conversao(%) e novos clientes
-
-# estoque -- separar por gerencia(filtro) - código do produto

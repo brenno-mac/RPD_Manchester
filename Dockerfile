@@ -25,7 +25,3 @@ CMD ["streamlit", "run", "app.py", "--server.port=8501", "--server.address=0.0.0
 
 
 
-
-###flag de relatórios###
-###relatório de informações###
-### funil para vendedores###
