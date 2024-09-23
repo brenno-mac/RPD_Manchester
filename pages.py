@@ -41,6 +41,8 @@ class BasePage:
     def select_box(self, label, options, placeholder):
         return st.sidebar.selectbox(label = label, options = (options), index=None, placeholder = placeholder)
 
+    def checkbox(self, label, value):
+        return st.sidebar.checkbox(label = label, value = value)
     
     
 class Relatorio_Estoque_Page(BasePage):
@@ -94,7 +96,8 @@ class Relatorio_Inadimplencia_Page(BasePage):
 
     def render(self):
         start_date, end_date = self.filter_dates()
-        df_transformed = transform_df_inadimplencia(self.df, start_date, end_date, self.user_name)
+        checkbox_90_days = self.checkbox(label = 'Últimos 90 dias e fora do Serasa', value = False)
+        df_transformed = transform_df_inadimplencia(self.df, start_date, end_date, self.user_name, checkbox_90_days)
         excel_data = self.to_excel(df_transformed)
         st.title(self.title)
         if self.user_name == 'Gerência':
@@ -166,8 +169,6 @@ class Relatorio_Contatos_Page(BasePage):
             file_name=f'relatorio_contatos{today.year}{today.month}{today.day}.xlsx',
             mime='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
         )
-        
-        
         
 class Relatorio_ContatosAgregados_Page(BasePage):
     def __init__(self, df, user_name):

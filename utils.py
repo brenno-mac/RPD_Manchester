@@ -38,7 +38,7 @@ def transform_df_estoque(df, start_date, end_date, name):
     
     
     
-def transform_df_inadimplencia(df, start_date, end_date, name):
+def transform_df_inadimplencia(df, start_date, end_date, name, checkbox_90_days):
     # Converte as datas para o tipo datetime64
         start_date = pd.to_datetime(start_date)
         end_date = pd.to_datetime(end_date)
@@ -53,6 +53,8 @@ def transform_df_inadimplencia(df, start_date, end_date, name):
         df['dias_vencidos'] = df['dias_vencidos'].astype(int)
         df.rename(columns={'codigo_parceiro':'Código Parceiro', 'nome_parceiro':'Nome Parceiro', 'vendedor':'Vendedor', 'data_de_vencimento':'Data de Vencimento', 'numero_da_nota':'N. da Nota', 'valor_da_nota':'Valor da Nota(R$)', 'descricao_oper':'Descrição da Operação', 'numero_parcela':'N. da Parcela', 'tipo_de_titulo':'Tipo de Título', 'dias_vencidos':'Dias Vencidos', 'valor_parcela':'Valor da Parcela(R$)', 'historico':'Histórico', 'codemp':'Empresa'}, inplace = True)
         df.drop(columns=['Valor da Nota(R$)'], inplace=True)
+        if checkbox_90_days:
+            df = df[(df['Dias Vencidos'] <= 90) & (df['Tipo de Título'] != 'INCLUIDO NO SERASA')] 
         if name != 'Gerência':
             df = df[df['Vendedor'] == name.upper()]
             df.drop(columns = ['Vendedor'], inplace = True)
