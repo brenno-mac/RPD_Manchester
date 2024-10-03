@@ -54,7 +54,7 @@ def transform_df_inadimplencia(df, start_date, end_date, name, checkbox_90_days)
         df.rename(columns={'codigo_parceiro':'Código Parceiro', 'nome_parceiro':'Nome Parceiro', 'vendedor':'Vendedor', 'data_de_vencimento':'Data de Vencimento', 'numero_da_nota':'N. da Nota', 'valor_da_nota':'Valor da Nota(R$)', 'descricao_oper':'Descrição da Operação', 'numero_parcela':'N. da Parcela', 'tipo_de_titulo':'Tipo de Título', 'dias_vencidos':'Dias Vencidos', 'valor_parcela':'Valor da Parcela(R$)', 'historico':'Histórico', 'codemp':'Empresa'}, inplace = True)
         df.drop(columns=['Valor da Nota(R$)'], inplace=True)
         if checkbox_90_days:
-            df = df[(df['Dias Vencidos'] <= 90) & (df['Tipo de Título'] != 'INCLUIDO NO SERASA')] 
+            df = df[(df['Dias Vencidos'] <= 90) & (df['Tipo de Título'] != 'INCLUIDO NO SERASA') & (df['Tipo de Título'] != 'PROTESTO')] 
         if name != 'Gerência':
             df = df[df['Vendedor'] == name.upper()]
             df.drop(columns = ['Vendedor'], inplace = True)
@@ -64,10 +64,10 @@ def transform_df_inadimplencia(df, start_date, end_date, name, checkbox_90_days)
     
 def transform_df_contatos(df, name, selectbox_vendedor, selectbox_telemarketing, selectbox_cotacao, selectbox_venda):
     df['codparc'] = df['codparc'].astype(str)
-    df.rename(columns={'codparc':'Código Parceiro', 'apelido':'Vendedor', 'nomeparc':'Nome do Parceiro', 'telemarketing_feito':'Fez telemarketing?', 'cotacao_feita':'Cotou?', 'contactou_ou_nao':'Fez contato esse mês?', 'ult_tele':'Último Telemarketing', 'ult_cotacao':'Última Cotação', 'ult_venda':'Última Venda', 'venda_feita':'Vendeu?'}, inplace = True)
+    df.rename(columns={'codparc':'Código Parceiro', 'apelido':'Vendedor', 'nomeparc':'Nome do Parceiro', 'telemarketing_feito':'Fez telemarketing?', 'cotacao_feita':'Cotou?', 'contactou_ou_nao':'Fez contato esse mês?', 'ult_tele':'Último Telemarketing', 'ult_cotacao':'Última Cotação', 'ult_venda':'Última Venda', 'venda_feita':'Vendeu?', 'tempo_ultima_venda':'Dias desde Última Venda'}, inplace = True)
     if name != 'Gerência':
         df = df[(df['Fez contato esse mês?'] == 'Não contactou') & (df['Vendedor'] == name.upper())]
-        df.drop(columns = ['Vendedor', 'Cotou?', 'Fez telemarketing?', 'Fez contato esse mês?', 'Vendeu?'], inplace = True)
+        df.drop(columns = ['Vendedor', 'Cotou?', 'Fez telemarketing?', 'Fez contato esse mês?', 'Vendeu?', 'Dias desde Última Venda'], inplace = True)
     else:
         if selectbox_vendedor:
             df = df[df['Vendedor'] == selectbox_vendedor]
@@ -97,10 +97,10 @@ def transform_df_contatosagregados(df, name):
     df_agrupado = df_agrupado[(df_agrupado['Ultima_Venda'].notna() | df_agrupado['Ultima_Venda'] < 90) & (df_agrupado['Contatos'] != 0)]
     df_agrupado.drop(columns = ['Ultima_Venda'], inplace = True)
     df_agrupado['Faltam contatos'] = df_agrupado['Carteira'] - df_agrupado['Contatos']
-    df_agrupado['Pct'] = (df_agrupado['Contatos'] / df_agrupado['Carteira']) * 100
+    df_agrupado['Porcentagem'] = (df_agrupado['Contatos'] / df_agrupado['Carteira']) * 100
     df_agrupado = df_agrupado.reset_index()
     df_agrupado.rename(columns = {'apelido':'Vendedor', 'Fez_telemarketing':'Fez telemarketing', }, inplace = True)
-    df_agrupado.sort_values(by='Pct', ascending = False, inplace = True)
+    df_agrupado.sort_values(by='Porcentagem', ascending = False, inplace = True)
     return df_agrupado
 
 

@@ -23,8 +23,6 @@ first_day_of_current_month = today.replace(day=1)
 # Subtrair um dia para obter o último dia do mês passado
 last_day_of_previous_month = first_day_of_current_month - datetime.timedelta(days=1)
 
-print(last_day_of_previous_month)
-
 project_id = 'manchester-ai'
 
 with open('config.yaml') as file:
