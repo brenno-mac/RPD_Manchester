@@ -1,5 +1,5 @@
 import streamlit as st
-from utils import transform_df_estoque, transform_df_inadimplencia, transform_df_contatos, transform_df_contatosagregados, transform_df_comissao
+from utils import transform_df_estoque, transform_df_inadimplencia, transform_df_contatos, transform_df_contatosagregados, transform_df_comissao, transform_df_comissao_agregado
 from io import BytesIO
 import pandas as pd
 
@@ -227,17 +227,21 @@ class Relatorio_Comissao_Page(BasePage):
     def render(self):
         start_date, end_date = self.filter_dates()
         mes_vigente = self.checkbox(label="Mês Vigente", value = True)
-        df_transformed = transform_df_comissao(self.df, self.user_name, start_date, end_date, mes_vigente)
         st.title(self.title)
         
         # df_transformed['Comissão'] = df_transformed['Comissão'].str.replace('.', '').str.replace(',', '.').astype(float)
-        total_valor = df_transformed['Comissão'].sum()
+        total_valor = self.df['comiss'].sum()
         total_valor_formatted = f"{total_valor:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
         if self.user_name == 'Gerência':
+            selectbox_vendedor = self.select_box(label="Escolha um vendedor", options=self.df['apelido'].unique(), placeholder="Selecione o vendedor")
             st.write(f"Abaixo está o relatório de comissão em nível gerencial:")
         else:
             st.write(f"Abaixo está o relatório de comissão para a vendedora {self.user_name}:")
             st.write(f"No período selecionado, você tem comissões que totalizam o valor de {total_valor_formatted} R$.")
+            
+        df_transformed = transform_df_comissao(self.df, self.user_name, start_date, end_date, mes_vigente, selectbox_vendedor)
+            
+            
         st.dataframe(df_transformed,
                      column_config={
                          "Data Faturada" : st.column_config.DateColumn(label="Data Faturada", format="DD/MM/YYYY"),
@@ -257,4 +261,34 @@ class Relatorio_Comissao_Page(BasePage):
             mime='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
         )
             
+class Relatorio_ComissaoAgregados_Page(BasePage):
+    def __init__(self, df, user_name):
+        super().__init__("Relatório de Comissão - Agregado", None, None, user_name)
+        self.df = df
+
+    def to_excel(self, df):
+        # Criando um buffer de Bytes para o arquivo Excel
+        output = BytesIO()
+        with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
+            df.to_excel(writer, index=False, sheet_name='Relatório')
+        # Movendo o cursor para o início do buffer
+        output.seek(0)
+        return output
+
+    def render(self):
+        df_transformed = transform_df_comissao_agregado(self.df, self.user_name)
+        st.title(self.title)
+        # if self.user_name == 'Gerência':
+        #     st.write(f"Abaixo está o relatório de contatos agregados em nível gerencial:")
+        # else:
+        #     st.write(f"Abaixo está o relatório de contatos agregados para a vendedora {self.user_name}:")
+        st.dataframe(df_transformed)
         
+        excel_data = self.to_excel(df_transformed)
+        
+        st.download_button(
+            label="Baixar relatório em Excel",
+            data=excel_data,
+            file_name=f'relatorio_contatos_agregados{today.year}{today.month}{today.day}.xlsx',
+            mime='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        )

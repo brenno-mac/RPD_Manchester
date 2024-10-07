@@ -2,12 +2,13 @@ import os
 from google.cloud import bigquery
 import pandas as pd
 from datetime import datetime
+from dateutil.relativedelta import relativedelta
 
 hoje = datetime.now()
 
-hoje.month
-
 inicio_mes_vigente = datetime(hoje.year, hoje.month, 1)
+
+first_day_six_months_ago = (hoje - relativedelta(months=6)).replace(day=1)
 
 def format_numbers_br(df, cols):
     for col in cols:
@@ -104,7 +105,7 @@ def transform_df_contatosagregados(df, name):
     df_agrupado.sort_values(by='Porcentagem', ascending = False, inplace = True)
     return df_agrupado
 
-def transform_df_comissao(df, name, start_date, end_date, mes_vigente):
+def transform_df_comissao(df, name, start_date, end_date, mes_vigente, selectbox_vendedor):
     start_date = pd.to_datetime(start_date)
     end_date = pd.to_datetime(end_date)
     df = df[(df['dhbaixa'] >= start_date) & (df['dhbaixa'] <= end_date)]
@@ -112,11 +113,6 @@ def transform_df_comissao(df, name, start_date, end_date, mes_vigente):
     df.rename(columns={'nufin':'N. Financeiro','numnota':'N. da Nota', 'dhbaixa':'Data da Baixa', 'dtfatur':'Data Faturada', 'dtvenc':'Data de Vencimento',  'diaatraso':'Dias Atrasado', 'parcela':'Parcela', 'codparc':'Cód. Parceiro', 'nomeparc':'Nome do Parceiro', 'vlrdesdob':'Valor do Desdobramento', 'comissao':'Comissão %', 'comiss':'Comissão', 'apelido':'Vendedor', 'codvend':'Cód. do Vendedor'}, inplace=True)
     df.drop(columns=['numnota2'], inplace=True)
     
-    # df = df[df['Valor em Aberto'] == 0]
-    # df['Comissão(R$)'] = df['Comissão(R$)'].apply(formatar_brasileiro)
-
-    
-    # df = format_numbers_br(df = df, cols = ['Valor do Desdobramento(R$)',  'Comissão(R$)', 'Comissão %'])
     df['N. Financeiro'] = df['N. Financeiro'].astype(str)
     df['N. da Nota'] = df['N. da Nota'].astype(str)
     df['Cód. Parceiro'] = df['Cód. Parceiro'].astype(str)
@@ -127,5 +123,18 @@ def transform_df_comissao(df, name, start_date, end_date, mes_vigente):
     if name != 'Gerência':
             df = df[df['Vendedor'] == name.upper()]
             df.drop(columns = ['Vendedor', 'Cód. do Vendedor'], inplace = True)
+    else:
+        if selectbox_vendedor: 
+            df = df[df['Vendedor'] == selectbox_vendedor]                    
+                        
     return df
 
+def transform_df_comissao_agregado(df, name):
+    df['dhbaixa'] = pd.to_datetime(df['dhbaixa'])
+    df = df[['apelido', 'dhbaixa', 'comiss']]
+    df = df[df['dhbaixa'] >= first_day_six_months_ago]
+    df['year_month'] = df['dhbaixa'].dt.to_period('M')
+    df_grouped = df.groupby(['apelido', 'year_month'])['comiss'].sum().reset_index() 
+    df_pivot = df_grouped.pivot(index='apelido', columns='year_month', values='comiss').fillna(0)
+    df_pivot.columns = [f"{col.strftime('%Y-%m')}" for col in df_pivot.columns]
+    return df_pivot

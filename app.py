@@ -9,14 +9,15 @@ import yaml
 from yaml.loader import SafeLoader
 from utils import connect_bigquery
 from queries import query_estoque, query_inadimplencia, query_contatos, query_comissao
-from pages import BasePage, Relatorio_Estoque_Page, Relatorio_Inadimplencia_Page, Relatorio_Contatos_Page, PageManager, Relatorio_ContatosAgregados_Page, Relatorio_Comissao_Page
-
+from pages import BasePage, Relatorio_Estoque_Page, Relatorio_Inadimplencia_Page, Relatorio_Contatos_Page, PageManager, Relatorio_ContatosAgregados_Page, Relatorio_Comissao_Page, Relatorio_ComissaoAgregados_Page
+from dateutil.relativedelta import relativedelta
 
 # Configurações iniciais e autenticação
 today = datetime.date.today()
 thirty_days_ago = today - datetime.timedelta(days=30)
 six_months_ago = today - datetime.timedelta(days=180)
 
+first_day_six_months_ago = (today - relativedelta(months=6)).replace(day=1)
 
 first_day_of_current_month = today.replace(day=1)
 
@@ -62,7 +63,8 @@ if authentication_status:
     page_manager.add_page("Relatório de Inadimplência", Relatorio_Inadimplencia_Page(df_inadimplencia, six_months_ago, last_day_of_previous_month, name))
     page_manager.add_page("Relatório de Contatos", Relatorio_Contatos_Page(df_contatos, name))
     page_manager.add_page("Relatório de Contatos - Agregado", Relatorio_ContatosAgregados_Page(df_contatos, name), allowed_users=["Gerência"])
-    page_manager.add_page("Relatório de Comissão", Relatorio_Comissao_Page(df_comissao, name, six_months_ago, today))
+    page_manager.add_page("Relatório de Comissão", Relatorio_Comissao_Page(df_comissao, name, first_day_six_months_ago, today))
+    page_manager.add_page("Relatório de Comissão - Agregado", Relatorio_ComissaoAgregados_Page(df_comissao, name), allowed_users=["Gerência"])    
         
     # Seleção e renderização da página
     selected_page = st.sidebar.selectbox("Selecione a Página", list(page_manager.pages.keys()))
