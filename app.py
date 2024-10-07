@@ -8,8 +8,8 @@ import datetime
 import yaml
 from yaml.loader import SafeLoader
 from utils import connect_bigquery
-from queries import query_estoque, query_inadimplencia, query_contatos
-from pages import BasePage, Relatorio_Estoque_Page, Relatorio_Inadimplencia_Page, Relatorio_Contatos_Page, PageManager, Relatorio_ContatosAgregados_Page
+from queries import query_estoque, query_inadimplencia, query_contatos, query_comissao
+from pages import BasePage, Relatorio_Estoque_Page, Relatorio_Inadimplencia_Page, Relatorio_Contatos_Page, PageManager, Relatorio_ContatosAgregados_Page, Relatorio_Comissao_Page
 
 
 # Configurações iniciais e autenticação
@@ -54,6 +54,7 @@ if authentication_status:
     df_estoque = pandas_gbq.read_gbq(query_estoque, project_id=project_id)
     df_inadimplencia = pandas_gbq.read_gbq(query_inadimplencia, project_id=project_id)
     df_contatos = pandas_gbq.read_gbq(query_contatos, project_id=project_id)
+    df_comissao = pandas_gbq.read_gbq(query_comissao, project_id=project_id)
     
     # Criação e gerenciamento de páginas
     page_manager = PageManager(thirty_days_ago, today, name)
@@ -61,7 +62,8 @@ if authentication_status:
     page_manager.add_page("Relatório de Inadimplência", Relatorio_Inadimplencia_Page(df_inadimplencia, six_months_ago, last_day_of_previous_month, name))
     page_manager.add_page("Relatório de Contatos", Relatorio_Contatos_Page(df_contatos, name))
     page_manager.add_page("Relatório de Contatos - Agregado", Relatorio_ContatosAgregados_Page(df_contatos, name), allowed_users=["Gerência"])
-    
+    page_manager.add_page("Relatório de Comissão", Relatorio_Comissao_Page(df_comissao, name, six_months_ago, today))
+        
     # Seleção e renderização da página
     selected_page = st.sidebar.selectbox("Selecione a Página", list(page_manager.pages.keys()))
     page_manager.render(selected_page)

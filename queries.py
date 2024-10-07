@@ -9,3 +9,7 @@ query_inadimplencia = """
 query_contatos = """
     select * from robo.contatos
 """
+
+query_comissao = """
+select * from robo.comissao
+"""

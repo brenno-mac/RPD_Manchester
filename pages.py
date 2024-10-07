@@ -1,5 +1,5 @@
 import streamlit as st
-from utils import transform_df_estoque, transform_df_inadimplencia, transform_df_contatos, transform_df_contatosagregados
+from utils import transform_df_estoque, transform_df_inadimplencia, transform_df_contatos, transform_df_contatosagregados, transform_df_comissao
 from io import BytesIO
 import pandas as pd
 
@@ -70,7 +70,8 @@ class Relatorio_Estoque_Page(BasePage):
             st.write(f"Abaixo está o relatório de estoque para a vendedora {self.user_name}:")
         st.dataframe(df_transformed, 
                      column_config={
-                        "Data Cotada": st.column_config.DateColumn(label="Data Cotada", format="DD/MM/YYYY")                            
+                        "Data Cotada": st.column_config.DateColumn(label="Data Cotada", format="DD/MM/YYYY"),
+                        "Valor da Nota": st.column_config.NumberColumn(label="Valor da Nota", format="R$ %.0f")                            
                      },
                     hide_index=True)
         st.download_button(
@@ -98,19 +99,21 @@ class Relatorio_Inadimplencia_Page(BasePage):
         start_date, end_date = self.filter_dates()
         checkbox_90_days = self.checkbox(label = 'Últimos 90 dias e fora do Serasa', value = False)
         df_transformed = transform_df_inadimplencia(self.df, start_date, end_date, self.user_name, checkbox_90_days)
+        
         excel_data = self.to_excel(df_transformed)
         st.title(self.title)
-        df_transformed['Valor da Parcela(R$)'] = df_transformed['Valor da Parcela(R$)'].str.replace('.', '').str.replace(',', '.').astype(float)
-
-        total_valor = df_transformed['Valor da Parcela(R$)'].sum()
+        total_valor = round(df_transformed['Valor da Parcela'].sum(), 2)
+        
+        total_valor_formatted = f"{total_valor:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
         if self.user_name == 'Gerência':
             st.write("Abaixo está o relatório de inadimplência em nível gerencial:")
         else:
             st.write(f"Abaixo está o relatório de inadimplência para a vendedora {self.user_name}:")
-            st.write(f"Você tem um total de {len(df_transformed)} notas inadimplentes, com um valor total de {round(total_valor,2)} R$.")
+            st.write(f"Você tem um total de {len(df_transformed)} notas inadimplentes, com um valor total de {total_valor_formatted} R$.")
         st.dataframe(df_transformed, 
                      column_config={
-                         "Data de Vencimento" : st.column_config.DateColumn(label="Data de Vencimento", format="DD/MM/YYYY")
+                         "Data de Vencimento" : st.column_config.DateColumn(label="Data de Vencimento", format="DD/MM/YYYY"),
+                         "Valor da Parcela": st.column_config.NumberColumn(label="Valor da Parcela", format="R$ %.0f")
                      },
                      hide_index=True)
         st.download_button(
@@ -207,5 +210,51 @@ class Relatorio_ContatosAgregados_Page(BasePage):
             mime='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
         )
         
+class Relatorio_Comissao_Page(BasePage):
+    def __init__(self, df, user_name, start_date, end_date):
+        super().__init__("Relatório de Comissão", start_date, end_date, user_name)
+        self.df = df
+
+    def to_excel(self, df):
+        # Criando um buffer de Bytes para o arquivo Excel
+        output = BytesIO()
+        with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
+            df.to_excel(writer, index=False, sheet_name='Relatório')
+        # Movendo o cursor para o início do buffer
+        output.seek(0)
+        return output
+
+    def render(self):
+        start_date, end_date = self.filter_dates()
+        mes_vigente = self.checkbox(label="Mês Vigente", value = True)
+        df_transformed = transform_df_comissao(self.df, self.user_name, start_date, end_date, mes_vigente)
+        st.title(self.title)
         
+        # df_transformed['Comissão'] = df_transformed['Comissão'].str.replace('.', '').str.replace(',', '.').astype(float)
+        total_valor = df_transformed['Comissão'].sum()
+        total_valor_formatted = f"{total_valor:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+        if self.user_name == 'Gerência':
+            st.write(f"Abaixo está o relatório de comissão em nível gerencial:")
+        else:
+            st.write(f"Abaixo está o relatório de comissão para a vendedora {self.user_name}:")
+            st.write(f"No período selecionado, você tem comissões que totalizam o valor de {total_valor_formatted} R$.")
+        st.dataframe(df_transformed,
+                     column_config={
+                         "Data Faturada" : st.column_config.DateColumn(label="Data Faturada", format="DD/MM/YYYY"),
+                         "Data de Vencimento" : st.column_config.DateColumn(label="Data de Vencimento", format="DD/MM/YYYY"),
+                         "Data da Baixa" : st.column_config.DateColumn(label="Data da Baixa", format="DD/MM/YYYY"),
+                         "Comissão" : st.column_config.NumberColumn(label="Comissão", format = "R$ %.2f"),
+                         "Valor do Desdobramento" : st.column_config.NumberColumn(label="Valor do Desdobramento", format = "R$ %.0f")
+                     },
+                     hide_index=True)
+        
+        excel_data = self.to_excel(df_transformed)
+        
+        st.download_button(
+            label="Baixar relatório em Excel",
+            data=excel_data,
+            file_name=f'relatorio_comissao{today.year}{today.month}{today.day}.xlsx',
+            mime='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        )
+            
         
