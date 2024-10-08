@@ -18,10 +18,7 @@ thirty_days_ago = today - datetime.timedelta(days=30)
 six_months_ago = today - datetime.timedelta(days=180)
 
 first_day_six_months_ago = (today - relativedelta(months=6)).replace(day=1)
-
 first_day_of_current_month = today.replace(day=1)
-
-# Subtrair um dia para obter o último dia do mês passado
 last_day_of_previous_month = first_day_of_current_month - datetime.timedelta(days=1)
 
 project_id = 'manchester-ai'
@@ -42,20 +39,38 @@ authenticator = stauth.Authenticate(
 
 name, authentication_status, username = authenticator.login()
 
+# Funções com cache para evitar consultas repetidas
+@st.cache_data(ttl=600)  # cache válido por 10 minutos
+def get_estoque_data():
+    return pandas_gbq.read_gbq(query_estoque, project_id=project_id)
+
+@st.cache_data(ttl=600)
+def get_inadimplencia_data():
+    return pandas_gbq.read_gbq(query_inadimplencia, project_id=project_id)
+
+@st.cache_data(ttl=600)
+def get_contatos_data():
+    return pandas_gbq.read_gbq(query_contatos, project_id=project_id)
+
+@st.cache_data(ttl=600)
+def get_comissao_data():
+    return pandas_gbq.read_gbq(query_comissao, project_id=project_id)
+
 if authentication_status:
     logo = 'https://storage.googleapis.com/imagem_app/logo_transparente.png'
     st.sidebar.image(logo, width=300)
     st.sidebar.write(f"Bem-vindo(a), {name}!")
     
     authenticator.logout(location='sidebar')
-    
+
     # Conexão com BigQuery
     cliente = connect_bigquery()
     
-    df_estoque = pandas_gbq.read_gbq(query_estoque, project_id=project_id)
-    df_inadimplencia = pandas_gbq.read_gbq(query_inadimplencia, project_id=project_id)
-    df_contatos = pandas_gbq.read_gbq(query_contatos, project_id=project_id)
-    df_comissao = pandas_gbq.read_gbq(query_comissao, project_id=project_id)
+    # Recuperando dados com cache
+    df_estoque = get_estoque_data()
+    df_inadimplencia = get_inadimplencia_data()
+    df_contatos = get_contatos_data()
+    df_comissao = get_comissao_data()
     
     # Criação e gerenciamento de páginas
     page_manager = PageManager(thirty_days_ago, today, name)
@@ -64,8 +79,8 @@ if authentication_status:
     page_manager.add_page("Relatório de Contatos", Relatorio_Contatos_Page(df_contatos, name))
     page_manager.add_page("Relatório de Contatos - Agregado", Relatorio_ContatosAgregados_Page(df_contatos, name), allowed_users=["Gerência"])
     page_manager.add_page("Relatório de Comissão", Relatorio_Comissao_Page(df_comissao, name, first_day_six_months_ago, today))
-    page_manager.add_page("Relatório de Comissão - Agregado", Relatorio_ComissaoAgregados_Page(df_comissao, name), allowed_users=["Gerência"])    
-        
+    page_manager.add_page("Relatório de Comissão - Agregado", Relatorio_ComissaoAgregados_Page(df_comissao, name), allowed_users=["Gerência"])
+    
     # Seleção e renderização da página
     selected_page = st.sidebar.selectbox("Selecione a Página", list(page_manager.pages.keys()))
     page_manager.render(selected_page)
@@ -75,6 +90,7 @@ elif authentication_status == False:
 
 elif authentication_status == None:
     st.warning("Por favor, insira seu usuário e senha")
+
 
 
 

@@ -229,8 +229,11 @@ class Relatorio_Comissao_Page(BasePage):
         mes_vigente = self.checkbox(label="Mês Vigente", value = True)
         st.title(self.title)
         
+        selectbox_vendedor = None
+        
+        df_transformed = transform_df_comissao(self.df, self.user_name, start_date, end_date, mes_vigente, selectbox_vendedor)
         # df_transformed['Comissão'] = df_transformed['Comissão'].str.replace('.', '').str.replace(',', '.').astype(float)
-        total_valor = self.df['comiss'].sum()
+        total_valor = df_transformed['Comissão'].sum()
         total_valor_formatted = f"{total_valor:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
         if self.user_name == 'Gerência':
             selectbox_vendedor = self.select_box(label="Escolha um vendedor", options=self.df['apelido'].unique(), placeholder="Selecione o vendedor")
@@ -238,8 +241,6 @@ class Relatorio_Comissao_Page(BasePage):
         else:
             st.write(f"Abaixo está o relatório de comissão para a vendedora {self.user_name}:")
             st.write(f"No período selecionado, você tem comissões que totalizam o valor de {total_valor_formatted} R$.")
-            
-        df_transformed = transform_df_comissao(self.df, self.user_name, start_date, end_date, mes_vigente, selectbox_vendedor)
             
             
         st.dataframe(df_transformed,
@@ -289,6 +290,6 @@ class Relatorio_ComissaoAgregados_Page(BasePage):
         st.download_button(
             label="Baixar relatório em Excel",
             data=excel_data,
-            file_name=f'relatorio_contatos_agregados{today.year}{today.month}{today.day}.xlsx',
+            file_name=f'relatorio_comissao_agregados{today.year}{today.month}{today.day}.xlsx',
             mime='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
         )
