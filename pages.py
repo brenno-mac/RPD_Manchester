@@ -167,7 +167,12 @@ class Relatorio_Contatos_Page(BasePage):
                      column_config={
                          "Último Telemarketing": st.column_config.DateColumn(label="Último Telemarketing", format="DD/MM/YYYY"),
                          "Última Cotação": st.column_config.DateColumn(label="Última Cotação", format="DD/MM/YYYY"),
-                         "Última Venda": st.column_config.DateColumn(label="Última Venda", format="DD/MM/YYYY")
+                         "Última Venda": st.column_config.DateColumn(label="Última Venda", format="DD/MM/YYYY"),
+                         "N de Compras": st.column_config.TextColumn(label="N de Compras", help = "Número de compras realizadas pelo parceiro nos últimos 6 meses"),
+                         "Valor das Compras": st.column_config.NumberColumn(label="Valor das Compras", help = "Valor total das compras realizadas pelo parceiro nos últimos 6 meses", format = "R$ %.0f"),
+                         "Valor Gasto Mês Passado" : st.column_config.NumberColumn(label = "Valor Gasto Mês Passado", format = "R$ %.0f"),
+                         "Valor Gasto Mês Atual" : st.column_config.NumberColumn(label = "Valor Gasto Mês Atual", format = "R$ %.0f"),
+                         "Elasticidade" : st.column_config.NumberColumn(label = "Elasticidade", format = "R$ %.0f", help = "Elasticidade de compra do parceiro")
                      },
                      hide_index=True)
         st.download_button(
