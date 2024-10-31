@@ -9,7 +9,7 @@ import yaml
 from yaml.loader import SafeLoader
 from utils import connect_bigquery
 from queries import query_estoque, query_inadimplencia, query_contatos, query_comissao
-from pages import BasePage, Relatorio_Estoque_Page, Relatorio_Inadimplencia_Page, Relatorio_Contatos_Page, PageManager, Relatorio_ContatosAgregados_Page, Relatorio_Comissao_Page, Relatorio_ComissaoAgregados_Page
+from pages import BasePage, Relatorio_Estoque_Page, Relatorio_Inadimplencia_Page, Relatorio_Contatos_Page, PageManager, Relatorio_ContatosAgregados_Page, Relatorio_Comissao_Page, Relatorio_ComissaoAgregados_Page, Relatorio_Vendas_Page
 from dateutil.relativedelta import relativedelta
 
 # Configurações iniciais e autenticação
@@ -52,9 +52,9 @@ def get_inadimplencia_data():
 def get_contatos_data():
     return pandas_gbq.read_gbq(query_contatos, project_id=project_id)
 
-@st.cache_data(ttl=600)
-def get_comissao_data():
-    return pandas_gbq.read_gbq(query_comissao, project_id=project_id)
+# @st.cache_data(ttl=600)
+# def get_comissao_data():
+#     return pandas_gbq.read_gbq(query_comissao, project_id=project_id)
 
 if authentication_status:
     logo = 'https://storage.googleapis.com/imagem_app/logo_transparente.png'
@@ -70,7 +70,7 @@ if authentication_status:
     df_estoque = get_estoque_data()
     df_inadimplencia = get_inadimplencia_data()
     df_contatos = get_contatos_data()
-    df_comissao = get_comissao_data()
+    # df_comissao = get_comissao_data()
     
     # Criação e gerenciamento de páginas
     page_manager = PageManager(thirty_days_ago, today, name)
@@ -78,9 +78,10 @@ if authentication_status:
     page_manager.add_page("Relatório de Inadimplência", Relatorio_Inadimplencia_Page(df_inadimplencia, six_months_ago, last_day_of_previous_month, name))
     page_manager.add_page("Relatório de Contatos", Relatorio_Contatos_Page(df_contatos, name))
     page_manager.add_page("Relatório de Contatos - Agregado", Relatorio_ContatosAgregados_Page(df_contatos, name), allowed_users=["Gerência"])
-    page_manager.add_page("Relatório de Comissão", Relatorio_Comissao_Page(df_comissao, name, first_day_six_months_ago, today))
-    page_manager.add_page("Relatório de Comissão - Agregado", Relatorio_ComissaoAgregados_Page(df_comissao, name), allowed_users=["Gerência"])
-    
+    # page_manager.add_page("Relatório de Comissão", Relatorio_Comissao_Page(df_comissao, name, first_day_six_months_ago, today), allowed_users = ['Gerência'])
+    # page_manager.add_page("Relatório de Comissão - Agregado", Relatorio_ComissaoAgregados_Page(df_comissao, name), allowed_users=["Gerência"])
+    page_manager.add_page("Relatório de Vendas", Relatorio_Vendas_Page(df_contatos, name))
+
     # Seleção e renderização da página
     selected_page = st.sidebar.selectbox("Selecione a Página", list(page_manager.pages.keys()))
     page_manager.render(selected_page)

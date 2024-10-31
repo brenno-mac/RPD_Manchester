@@ -1,5 +1,5 @@
 import streamlit as st
-from utils import transform_df_estoque, transform_df_inadimplencia, transform_df_contatos, transform_df_contatosagregados, transform_df_comissao, transform_df_comissao_agregado
+from utils import transform_df_estoque, transform_df_inadimplencia, transform_df_contatos, transform_df_contatosagregados, transform_df_comissao, transform_df_comissao_agregado, transform_df_vendas
 from io import BytesIO
 import pandas as pd
 
@@ -296,5 +296,60 @@ class Relatorio_ComissaoAgregados_Page(BasePage):
             label="Baixar relatório em Excel",
             data=excel_data,
             file_name=f'relatorio_comissao_agregados{today.year}{today.month}{today.day}.xlsx',
+            mime='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        )
+
+class Relatorio_Vendas_Page(BasePage):
+    def __init__(self, df, user_name):
+        super().__init__("Relatório de Vendas", None, None, user_name)
+        self.df = df
+
+    def to_excel(self, df):
+        # Criando um buffer de Bytes para o arquivo Excel
+        output = BytesIO()
+        with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
+            df.to_excel(writer, index=False, sheet_name='Relatório')
+        # Movendo o cursor para o início do buffer
+        output.seek(0)
+        return output
+
+    def render(self):
+        st.title(self.title)
+        melhor_dia = self.checkbox(label="Melhor Dia para Contato", value = False)
+        if self.user_name == 'Gerência':
+            st.write(f"Abaixo está o relatório de vendas em nível gerencial:")
+
+            # Filtros para o usuário "Gerência"
+            selectbox_vendedor = self.select_box(label="Escolha um vendedor", options=self.df['apelido'].unique(), placeholder="Selecione o vendedor")
+            selectbox_telemarketing = self.select_box(label="Telemarketing?", options=self.df['telemarketing_feito'].unique(), placeholder="Selecione se houve telemarketing")
+            selectbox_cotacao = self.select_box(label="Cotou?", options=self.df['cotacao_feita'].unique(), placeholder="Selecione se houve cotação")
+            selectbox_venda = self.select_box(label="Vendeu?", options=self.df['venda_feita'].unique(), placeholder="Selecione se houve venda")
+        else:
+            st.write(f"Abaixo está o relatório de vendas para a vendedora {self.user_name}:")
+            selectbox_vendedor = None
+            selectbox_telemarketing = None
+            selectbox_cotacao = None
+            selectbox_venda = None
+           # Transforma o dataframe usando os filtros (se existirem)
+        df_transformed = transform_df_vendas(self.df, self.user_name, selectbox_vendedor, selectbox_telemarketing, selectbox_cotacao, selectbox_venda, melhor_dia)
+        
+        excel_data = self.to_excel(df_transformed)
+        
+        st.dataframe(df_transformed,
+                     column_config={
+                         "Último Telemarketing": st.column_config.DateColumn(label="Último Telemarketing", format="DD/MM/YYYY"),
+                         "Última Cotação": st.column_config.DateColumn(label="Última Cotação", format="DD/MM/YYYY"),
+                         "Última Venda": st.column_config.DateColumn(label="Última Venda", format="DD/MM/YYYY"),
+                         "N de Compras": st.column_config.TextColumn(label="N de Compras", help = "Número de compras realizadas pelo parceiro nos últimos 6 meses"),
+                        #  "Valor das Compras": st.column_config.NumberColumn(label="Valor das Compras", help = "Valor total das compras realizadas pelo parceiro nos últimos 6 meses", format = "R$ %.0f"),
+                        #  "Valor Gasto Mês Passado" : st.column_config.NumberColumn(label = "Valor Gasto Mês Passado", format = "R$ %.0f"),
+                        #  "Valor Gasto Mês Atual" : st.column_config.NumberColumn(label = "Valor Gasto Mês Atual", format = "R$ %.0f"),
+                        #  "Elasticidade" : st.column_config.NumberColumn(label = "Elasticidade", format = "R$ %.0f", help = "Elasticidade de compra do parceiro")
+                     },
+                     hide_index=True)
+        st.download_button(
+            label="Baixar relatório em Excel",
+            data=excel_data,
+            file_name=f'relatorio_vendas{today.year}{today.month}{today.day}.xlsx',
             mime='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
         )
