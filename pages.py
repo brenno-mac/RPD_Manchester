@@ -26,12 +26,17 @@ class PageManager:
             st.error(f"Página '{page_name}' não encontrada ou você não tem permissão para acessá-la.")
 
 class BasePage:
-    def __init__(self, title, start_date, end_date, user_name):
+    def __init__(self, title, start_date, end_date, user_name, description = ""):
         self.title = title
         self.start_date = start_date
         self.end_date = end_date
         self.user_name = user_name
+        self.description = description
 
+    def get_description(self):
+        # Personalize a descrição com o nome do usuário
+        return self.description.format(user_name=self.user_name)
+    
     def render(self):
         raise NotImplementedError("Subclasses should implement this method.")
 
@@ -47,8 +52,12 @@ class BasePage:
     
 class Relatorio_Estoque_Page(BasePage):
     def __init__(self, df, start_date, end_date, user_name):
-        super().__init__("Cotações com falta de Estoque", start_date, end_date, user_name)
-        self.df = df
+        self.original_df = df
+        self.df = transform_df_estoque(df, start_date=start_date, end_date=end_date, name=user_name)
+        num_cotacoes = len(self.df)
+        description = (f"Você tem {num_cotacoes} cotações com falta de estoque nos últimos 30 dias.")
+        super().__init__("Cotações com falta de Estoque", start_date, end_date, user_name, description=description)
+        
 
     def to_excel(self, df):
         # Criando um buffer de Bytes para o arquivo Excel
@@ -61,14 +70,14 @@ class Relatorio_Estoque_Page(BasePage):
 
     def render(self):
         start_date, end_date = self.filter_dates()
-        df_transformed = transform_df_estoque(self.df, start_date, end_date, self.user_name)
-        excel_data = self.to_excel(df_transformed)
+        df_filtered = transform_df_estoque(self.original_df, start_date=start_date, end_date=end_date, name=self.user_name)
+        excel_data = self.to_excel(df_filtered)
         st.title(self.title)
         if self.user_name == 'Gerência':
-            st.write(f"Abaixo está o relatório de estoque em nível gerencial:")
+            st.write("Abaixo está o relatório de estoque em nível gerencial:")
         else:
-            st.write(f"Abaixo está o relatório de estoque para a vendedora {self.user_name}:")
-        st.dataframe(df_transformed, 
+            st.write(f"Abaixo está o relatório de estoque para o(a) vendedor(a) {self.user_name}:")
+        st.dataframe(df_filtered, 
                      column_config={
                         "Data Cotada": st.column_config.DateColumn(label="Data Cotada", format="DD/MM/YYYY"),
                         "Valor da Nota": st.column_config.NumberColumn(label="Valor da Nota", format="R$ %.0f")                            
@@ -80,7 +89,7 @@ class Relatorio_Estoque_Page(BasePage):
             file_name=f'relatorio_estoque{today.year}{today.month}{today.day}.xlsx',
             mime='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
         )
-        
+          
 class Relatorio_Inadimplencia_Page(BasePage):
     def __init__(self, df, start_date, end_date, user_name):
         super().__init__("Relatório de Inadimplência", start_date, end_date, user_name)

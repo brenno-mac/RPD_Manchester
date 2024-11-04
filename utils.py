@@ -27,6 +27,7 @@ def connect_bigquery():
 
 def transform_df_estoque(df, start_date, end_date, name):
     # Converte as datas para o tipo datetime64
+        print(df.columns)
         start_date = pd.to_datetime(start_date)
         end_date = pd.to_datetime(end_date)
     
