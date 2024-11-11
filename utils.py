@@ -50,7 +50,9 @@ def transform_df_inadimplencia(df, start_date, end_date, name, checkbox_90_days)
     # Converte as datas para o tipo datetime64
         start_date = pd.to_datetime(start_date)
         end_date = pd.to_datetime(end_date)
-        df.drop(columns=['valor_da_nota'], inplace=True)
+        if 'valor_da_nota' in df.columns:
+            df.drop(columns=['valor_da_nota'], inplace=True)
+        # df.drop(columns=['valor_da_nota'], inplace=True)
         df['data_de_vencimento'] = pd.to_datetime(df['data_de_vencimento'], format = '%d/%m/%Y')
     # Filtra o DataFrame pelas datas escolhidas
         df = df[(df['data_de_vencimento'] >= start_date) & (df['data_de_vencimento'] <= end_date)]
@@ -70,22 +72,22 @@ def transform_df_inadimplencia(df, start_date, end_date, name, checkbox_90_days)
     
 def transform_df_contatos(df, name, selectbox_vendedor, selectbox_telemarketing, selectbox_cotacao, selectbox_venda):
     df['codparc'] = df['codparc'].astype(str)
-    df.rename(columns={'codparc':'Código Parceiro', 'apelido':'Vendedor', 'nomeparc':'Nome do Parceiro', 'telemarketing_feito':'Fez telemarketing?', 'cotacao_feita':'Cotou?', 'contactou_ou_nao':'Fez contato esse mês?', 'ult_tele':'Último Telemarketing', 'ult_cotacao':'Última Cotação', 'ult_venda':'Última Venda', 'venda_feita':'Vendeu?', 'tempo_ultima_venda':'Dias desde Última Venda', 'dias_preferidos_cotar':'Dia Preferido para Contato', 'qtd_compras':'N de Compras', 'vlr_compras':'Valor das Compras', 'dias_preferidos_pedido':'Dia Preferido para Pedidos', 'vlr_gasto_mes_passado':'Valor Gasto Mês Passado', 'vlr_gasto_mes_atual':'Valor Gasto Mês Atual', 'elasticidade':'Elasticidade', 'vergalhao':'Vergalhão', 'cd':'C/D', 'arame':'Arame', 'prego':'Prego', 'estribo':'Estribo', 'coluna':'Coluna', 'tela_soldada':'Tela Soldada', 'trelica':'Treliça', 'radier':'Radier', 'bba':'BBA', 'cercamento':'Cercamento', 'perfil':'Perfil'}, inplace = True)
-    df['Última Venda'] = pd.to_datetime(df['Última Venda'], format='%d/%M/%Y')
-    df['Último Telemarketing'] = pd.to_datetime(df['Último Telemarketing'], format='%Y/%M/%d')
+    # df.rename(columns={'codparc':'Código Parceiro', 'apelido':'Vendedor', 'nomeparc':'Nome do Parceiro', 'telemarketing_feito':'Fez telemarketing?', 'cotacao_feita':'Cotou?', 'contactou_ou_nao':'Fez contato esse mês?', 'ult_tele':'Último Telemarketing', 'ult_cotacao':'Última Cotação', 'ult_venda':'Última Venda', 'venda_feita':'Vendeu?', 'tempo_ultima_venda':'Dias desde Última Venda', 'dias_preferidos_cotar':'Dia Preferido para Contato', 'qtd_compras':'N de Compras', 'vlr_compras':'Valor das Compras', 'dias_preferidos_pedido':'Dia Preferido para Pedidos', 'vlr_gasto_mes_passado':'Valor Gasto Mês Passado', 'vlr_gasto_mes_atual':'Valor Gasto Mês Atual', 'elasticidade':'Elasticidade', 'vergalhao':'Vergalhão', 'cd':'C/D', 'arame':'Arame', 'prego':'Prego', 'estribo':'Estribo', 'coluna':'Coluna', 'tela_soldada':'Tela Soldada', 'trelica':'Treliça', 'radier':'Radier', 'bba':'BBA', 'cercamento':'Cercamento', 'perfil':'Perfil'}, inplace = True)
+    df['ult_venda'] = pd.to_datetime(df['ult_venda'], format='%d/%M/%Y')
+    df['ult_tele'] = pd.to_datetime(df['ult_tele'], format='%Y/%M/%d')
     if name != 'Gerência':
-        df = df[(df['Fez contato esse mês?'] == 'Não contactou') & (df['Vendedor'] == name.upper())]
-        df.drop(columns = ['Vendedor', 'Cotou?', 'Fez telemarketing?', 'Fez contato esse mês?', 'Vendeu?', 'Dias desde Última Venda'], inplace = True)
-        df = df[['Código Parceiro', 'Nome do Parceiro', 'Último Telemarketing', 'Última Cotação', 'Última Venda']]
+        df = df[(df['contactou_ou_nao'] == 'Não contactou') & (df['apelido'] == name.upper())]
+        # df.drop(columns = ['apelido', 'cotacao_feita', 'telemarketing_feito', 'contactou_ou_nao', 'venda_feita', 'tempo_ultima_venda'], inplace = True)
+        df = df[['codparc', 'nomeparc', 'ult_tele', 'ult_cotacao', 'ult_venda']]
     else:
         if selectbox_vendedor:
-            df = df[df['Vendedor'] == selectbox_vendedor]
+            df = df[df['apelido'] == selectbox_vendedor]
         if selectbox_telemarketing:
-            df = df[df['Fez telemarketing?'] == selectbox_telemarketing]
+            df = df[df['telemarketing_feito'] == selectbox_telemarketing]
         if selectbox_cotacao:
-            df = df[df['Cotou?'] == selectbox_cotacao]
+            df = df[df['cotacao_feita'] == selectbox_cotacao]
         if selectbox_venda:
-            df = df[df['Vendeu?'] == selectbox_venda]
+            df = df[df['venda_feita'] == selectbox_venda]
     return df
 
 def transform_df_contatosagregados(df, name):
@@ -146,35 +148,41 @@ def transform_df_comissao_agregado(df, name):
 
 def transform_df_vendas(df, name, selectbox_vendedor, selectbox_telemarketing, selectbox_cotacao, selectbox_venda, melhor_dia):
     df['codparc'] = df['codparc'].astype(str)
-    df.rename(columns={'codparc':'Código Parceiro', 'apelido':'Vendedor', 'nomeparc':'Nome do Parceiro', 'telemarketing_feito':'Fez telemarketing?', 'cotacao_feita':'Cotou?', 'contactou_ou_nao':'Fez contato esse mês?', 'ult_tele':'Último Telemarketing', 'ult_cotacao':'Última Cotação', 'ult_venda':'Última Venda', 'venda_feita':'Vendeu?', 'tempo_ultima_venda':'Dias desde Última Venda', 'dias_preferidos_cotar':'Dia Preferido para Contato', 'qtd_compras':'N de Compras', 'vlr_compras':'Valor das Compras', 'dias_preferidos_pedido':'Dia Preferido para Pedidos', 'vlr_gasto_mes_passado':'Valor Gasto Mês Passado', 'vlr_gasto_mes_atual':'Valor Gasto Mês Atual', 'elasticidade':'Elasticidade', 'vergalhao':'Vergalhão', 'cd':'C/D', 'arame':'Arame', 'prego':'Prego', 'estribo':'Estribo', 'coluna':'Coluna', 'tela_soldada':'Tela Soldada', 'trelica':'Treliça', 'radier':'Radier', 'bba':'BBA', 'cercamento':'Cercamento', 'perfil':'Perfil'}, inplace = True)
-    df['Última Venda'] = pd.to_datetime(df['Última Venda'], format='%d/%M/%Y')
-    df['Último Telemarketing'] = pd.to_datetime(df['Último Telemarketing'], format='%Y/%M/%d')
-    df = format_numbers_br(df, ['Elasticidade', 'Valor das Compras', 'Valor Gasto Mês Atual', 'Valor Gasto Mês Passado', 'Vergalhão', 'C/D', 'Arame', 'Prego', 'Estribo', 'Coluna', 'Tela Soldada', 'Treliça', 'Radier', 'BBA', 'Cercamento', 'Perfil'])
+    # df.rename(columns={'codparc':'Código Parceiro', 'apelido':'Vendedor', 'nomeparc':'Nome do Parceiro', 'telemarketing_feito':'Fez telemarketing?', 'cotacao_feita':'Cotou?', 'contactou_ou_nao':'Fez contato esse mês?', 'ult_tele':'Último Telemarketing', 'ult_cotacao':'Última Cotação', 'ult_venda':'Última Venda', 'venda_feita':'Vendeu?', 'tempo_ultima_venda':'Dias desde Última Venda', 'dias_preferidos_cotar':'Dia Preferido para Contato', 'qtd_compras':'N de Compras', 'vlr_compras':'Valor das Compras', 'dias_preferidos_pedido':'Dia Preferido para Pedidos', 'vlr_gasto_mes_passado':'Valor Gasto Mês Passado', 'vlr_gasto_mes_atual':'Valor Gasto Mês Atual', 'elasticidade':'Elasticidade', 'vergalhao':'Vergalhão', 'cd':'C/D', 'arame':'Arame', 'prego':'Prego', 'estribo':'Estribo', 'coluna':'Coluna', 'tela_soldada':'Tela Soldada', 'trelica':'Treliça', 'radier':'Radier', 'bba':'BBA', 'cercamento':'Cercamento', 'perfil':'Perfil'}, inplace = True)
+    df['ult_venda'] = pd.to_datetime(df['ult_venda'], format='%d/%M/%Y')
+    df['ult_tele'] = pd.to_datetime(df['ult_tele'], format='%Y/%M/%d')
+    # df = format_numbers_br(df, ['elasticidade', 'vlr_compras', 'vlr_gasto_mes_atual', 'vlr_gasto_mes_passado', 'vergalhao', 'cd', 'arame', 'prego', 'estribo', 'coluna', 'tela_soldada', 'trelica', 'radier', 'bba', 'cercamento', 'perfil'])
     
     # if melhor_dia:
     #     df = df[df['Dia Preferido para Contato'] == hoje.day]
     
+    # df['dias_preferidos_pedido'] = df['dias_preferidos_pedido'].apply(
+        # lambda x: [int(dia) for dia in x.split(',')] if pd.notnull(x) else []
+    # )
+    
     if melhor_dia:
     # Converte a coluna em listas de inteiros, ignorando valores None
-        df['Dia Preferido para Contato'] = df['Dia Preferido para Contato'].apply(
+        df['dias_preferidos_cotar'] = df['dias_preferidos_cotar'].apply(
         lambda x: [int(dia) for dia in x.split(',')] if pd.notnull(x) else []
     )
     # Filtra as linhas onde o dia atual está presente na lista de dias
-        df = df[df['Dia Preferido para Contato'].apply(lambda dias: hoje.day in dias)]
+        df = df[df['dias_preferidos_cotar'].apply(lambda dias: hoje.day in dias)]
         # st.write(df_filtrado.drop(columns='Dias para contato'))
         # df = df[df['Dia Preferido para Contato'].contains()]
     
     
     if name != 'Gerência':
-        # df = df[(df['Fez contato esse mês?'] == 'Não contactou') & (df['Vendedor'] == name.upper())]
-        df.drop(columns = ['Vendedor', 'Cotou?', 'Fez telemarketing?', 'Fez contato esse mês?', 'Vendeu?', 'Dias desde Última Venda'], inplace = True)
-    else:
+        df = df[df['apelido'] == name.upper()]
+        # df.drop(columns = ['apelido', 'cotacao_feita', 'telemarketing_feito', 'contactou_ou_nao', 'venda_feita', 'tempo_ultima_venda'], inplace = True)
+    if name == 'Gerência':
         if selectbox_vendedor:
-            df = df[df['Vendedor'] == selectbox_vendedor]
+            df = df[df['apelido'] == selectbox_vendedor]
         if selectbox_telemarketing:
-            df = df[df['Fez telemarketing?'] == selectbox_telemarketing]
+            df = df[df['telemarketing_feito'] == selectbox_telemarketing]
         if selectbox_cotacao:
-            df = df[df['Cotou?'] == selectbox_cotacao]
+            df = df[df['cotacao_feita'] == selectbox_cotacao]
         if selectbox_venda:
-            df = df[df['Vendeu?'] == selectbox_venda]
+            df = df[df['venda_feita'] == selectbox_venda]
+    # else:
+        # pass
     return df

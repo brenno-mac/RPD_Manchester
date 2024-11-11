@@ -91,9 +91,14 @@ class Relatorio_Estoque_Page(BasePage):
         )
           
 class Relatorio_Inadimplencia_Page(BasePage):
-    def __init__(self, df, start_date, end_date, user_name):
-        super().__init__("Relatório de Inadimplência", start_date, end_date, user_name)
-        self.df = df
+    def __init__(self, df, start_date, end_date, user_name, checkbox_90_days):
+        self.original_df = df
+        self.df = transform_df_inadimplencia(df, start_date=start_date, end_date=end_date, name=user_name, checkbox_90_days=False)
+        total_valor = round(self.df['Valor da Parcela'].sum(), 2)
+        total_valor_formatted = f"{total_valor:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+        description = f"Você tem um total de {len(self.df)} notas inadimplentes, com um valor total de {total_valor_formatted} R$."
+        super().__init__("Relatório de Inadimplência", start_date, end_date, user_name, description=description)
+        
 
     def to_excel(self, df):
         # Criando um buffer de Bytes para o arquivo Excel
@@ -107,7 +112,7 @@ class Relatorio_Inadimplencia_Page(BasePage):
     def render(self):
         start_date, end_date = self.filter_dates()
         checkbox_90_days = self.checkbox(label = 'Últimos 90 dias e fora do Serasa', value = False)
-        df_transformed = transform_df_inadimplencia(self.df, start_date, end_date, self.user_name, checkbox_90_days)
+        df_transformed = transform_df_inadimplencia(self.original_df, start_date, end_date, self.user_name, checkbox_90_days)
         
         excel_data = self.to_excel(df_transformed)
         st.title(self.title)
@@ -134,8 +139,16 @@ class Relatorio_Inadimplencia_Page(BasePage):
 
 class Relatorio_Contatos_Page(BasePage):
     def __init__(self, df, user_name):
-        super().__init__("Relatório de Contatos", None, None, user_name)
-        self.df = df
+        self.original_df = df
+        self.user_name = user_name
+        self.df = transform_df_contatos(df, name=user_name,selectbox_vendedor=False, selectbox_venda=False, selectbox_cotacao=False, selectbox_telemarketing=False )
+        if user_name != "Gerência":
+            contatos = round((len(self.original_df[(self.original_df['apelido'] == self.user_name.upper()) & (self.original_df['contactou_ou_nao'] == 'Contato feito')]))/(len(self.original_df[self.original_df['apelido'] == self.user_name.upper()])) * 100, 2)
+        else:
+            contatos = 'Vou ver depois'
+        description = f"Você contactou {contatos}% dos parceiros este mês. "
+        super().__init__("Relatório de Contatos", None, None, user_name, description=description)
+        
 
     def to_excel(self, df):
         # Criando um buffer de Bytes para o arquivo Excel
@@ -163,25 +176,22 @@ class Relatorio_Contatos_Page(BasePage):
             selectbox_cotacao = None
             selectbox_venda = None
             # Adiciona o cálculo de métricas se o usuário não for "Gerência"
-            if round((len(self.df[(self.df['apelido'] == self.user_name.upper()) & (self.df['contactou_ou_nao'] == 'Contato feito')]))/(len(self.df[self.df['apelido'] == self.user_name.upper()])) * 100, 2) == 100:
+            if round((len(self.original_df[(self.original_df['apelido'] == self.user_name.upper()) & (self.original_df['contactou_ou_nao'] == 'Contato feito')]))/(len(self.original_df[self.original_df['apelido'] == self.user_name.upper()])) * 100, 2) == 100:
                 st.metric(label="", value="Parabéns, meta batida!")
             else:
-                st.metric(label="Contatos Feitos, em %", value=f"{round((len(self.df[(self.df['apelido'] == self.user_name.upper()) & (self.df['contactou_ou_nao'] == 'Contato feito')]))/(len(self.df[self.df['apelido'] == self.user_name.upper()])) * 100, 2)} %")
+                st.metric(label="Contatos Feitos, em %", value=f"{round((len(self.original_df[(self.original_df['apelido'] == self.user_name.upper()) & (self.original_df['contactou_ou_nao'] == 'Contato feito')]))/(len(self.original_df[self.original_df['apelido'] == self.user_name.upper()])) * 100, 2)} %")
         # Transforma o dataframe usando os filtros (se existirem)
-        df_transformed = transform_df_contatos(self.df, self.user_name, selectbox_vendedor, selectbox_telemarketing, selectbox_cotacao, selectbox_venda)
+        df_transformed = transform_df_contatos(self.original_df, self.user_name, selectbox_vendedor, selectbox_telemarketing, selectbox_cotacao, selectbox_venda)
         
         excel_data = self.to_excel(df_transformed)
         
         st.dataframe(df_transformed,
                      column_config={
-                         "Último Telemarketing": st.column_config.DateColumn(label="Último Telemarketing", format="DD/MM/YYYY"),
-                         "Última Cotação": st.column_config.DateColumn(label="Última Cotação", format="DD/MM/YYYY"),
-                         "Última Venda": st.column_config.DateColumn(label="Última Venda", format="DD/MM/YYYY"),
-                         "N de Compras": st.column_config.TextColumn(label="N de Compras", help = "Número de compras realizadas pelo parceiro nos últimos 6 meses"),
-                         "Valor das Compras": st.column_config.NumberColumn(label="Valor das Compras", help = "Valor total das compras realizadas pelo parceiro nos últimos 6 meses", format = "R$ %.0f"),
-                         "Valor Gasto Mês Passado" : st.column_config.NumberColumn(label = "Valor Gasto Mês Passado", format = "R$ %.0f"),
-                         "Valor Gasto Mês Atual" : st.column_config.NumberColumn(label = "Valor Gasto Mês Atual", format = "R$ %.0f"),
-                         "Elasticidade" : st.column_config.NumberColumn(label = "Elasticidade", format = "R$ %.0f", help = "Elasticidade de compra do parceiro")
+                         "ult_tele": st.column_config.DateColumn(label="Último Telemarketing", format="DD/MM/YYYY"),
+                         "ult_cotacao": st.column_config.DateColumn(label="Última Cotação", format="DD/MM/YYYY"),
+                         "ult_venda": st.column_config.DateColumn(label="Última Venda", format="DD/MM/YYYY"),
+                         "codparc": st.column_config.TextColumn(label="Cód. Parceiro"),
+                         "nomeparc": st.column_config.TextColumn(label="Nome do Parceiro"),
                      },
                      hide_index=True)
         st.download_button(
@@ -310,8 +320,12 @@ class Relatorio_ComissaoAgregados_Page(BasePage):
 
 class Relatorio_Vendas_Page(BasePage):
     def __init__(self, df, user_name):
-        super().__init__("Relatório de Vendas", None, None, user_name)
-        self.df = df
+        self.original_df = df
+        self.df = transform_df_vendas(df, name=user_name,selectbox_vendedor=False, selectbox_venda=False, selectbox_cotacao=False, selectbox_telemarketing=False, melhor_dia=True) 
+        parceiros_hoje = len(self.df)
+        description = f"Você tem {parceiros_hoje} parceiros para entrar em contato hoje."
+        super().__init__("Relatório de Vendas", None, None, user_name, description=description)
+        
 
     def to_excel(self, df):
         # Criando um buffer de Bytes para o arquivo Excel
@@ -324,7 +338,7 @@ class Relatorio_Vendas_Page(BasePage):
 
     def render(self):
         st.title(self.title)
-        melhor_dia = self.checkbox(label="Melhor Dia para Contato", value = False)
+        melhor_dia = self.checkbox(label="Melhor Dia para Contato", value = True)
         if self.user_name == 'Gerência':
             st.write(f"Abaixo está o relatório de vendas em nível gerencial:")
 
@@ -346,14 +360,36 @@ class Relatorio_Vendas_Page(BasePage):
         
         st.dataframe(df_transformed,
                      column_config={
-                         "Último Telemarketing": st.column_config.DateColumn(label="Último Telemarketing", format="DD/MM/YYYY"),
-                         "Última Cotação": st.column_config.DateColumn(label="Última Cotação", format="DD/MM/YYYY"),
-                         "Última Venda": st.column_config.DateColumn(label="Última Venda", format="DD/MM/YYYY"),
-                         "N de Compras": st.column_config.TextColumn(label="N de Compras", help = "Número de compras realizadas pelo parceiro nos últimos 6 meses"),
-                        #  "Valor das Compras": st.column_config.NumberColumn(label="Valor das Compras", help = "Valor total das compras realizadas pelo parceiro nos últimos 6 meses", format = "R$ %.0f"),
-                        #  "Valor Gasto Mês Passado" : st.column_config.NumberColumn(label = "Valor Gasto Mês Passado", format = "R$ %.0f"),
-                        #  "Valor Gasto Mês Atual" : st.column_config.NumberColumn(label = "Valor Gasto Mês Atual", format = "R$ %.0f"),
-                        #  "Elasticidade" : st.column_config.NumberColumn(label = "Elasticidade", format = "R$ %.0f", help = "Elasticidade de compra do parceiro")
+                         "ult_tele": st.column_config.DateColumn(label="Último Telemarketing", format="DD/MM/YYYY"),
+                         "ult_cotacao": st.column_config.DateColumn(label="Última Cotação", format="DD/MM/YYYY"),
+                         "ult_venda": st.column_config.DateColumn(label="Última Venda", format="DD/MM/YYYY"),
+                         "qtd_compras": st.column_config.TextColumn(label="N de Compras", help = "Número de compras realizadas pelo parceiro nos últimos 6 meses"),
+                         "vlr_compras": st.column_config.NumberColumn(label="Valor das Compras", help = "Valor total das compras realizadas pelo parceiro nos últimos 6 meses", format = "R$ %.0f"),
+                         "vlr_gasto_mes_passado" : st.column_config.NumberColumn(label = "Valor Gasto Mês Passado", format = "R$ %.0f"),
+                         "vlr_gasto_mes_atual" : st.column_config.NumberColumn(label = "Valor Gasto Mês Atual", format = "R$ %.0f"),
+                         "elasticidade" : st.column_config.NumberColumn(label = "Elasticidade", format = "R$ %.0f", help = "Elasticidade de compra do parceiro"),
+                         "codparc": st.column_config.TextColumn(label="Cód. Parceiro"),
+                         "apelido": st.column_config.TextColumn(label="Vendedor"),
+                         "nomeparc": st.column_config.TextColumn(label="Nome do Parceiro"),
+                         "telemarketing_feito": st.column_config.TextColumn(label="Entrou em contato por telemarketing?"),
+                         "cotacao_feita": st.column_config.TextColumn(label="Cotou esse mês?"),
+                         "venda_feita": st.column_config.TextColumn(label="Vendeu esse mês?"),
+                         "contactou_ou_nao": st.column_config.TextColumn(label="Entrou em contato?"),
+                         "tempo_ultima_venda" : st.column_config.NumberColumn(label = "Dias desde a Última Venda"),
+                         "dias_preferidos_cotar" : st.column_config.Column(label = "Dias Preferidos para Cotar"),
+                         "dias_preferidos_pedido" : st.column_config.Column(label = "Dias Preferidos para Fazer Pedido"),
+                         "vergalhao" : st.column_config.Column(label = "Vergalhão"),
+                         "cd" : st.column_config.Column(label = "C/D"),
+                         "arame" : st.column_config.Column(label = "Arame"),
+                         "prego" : st.column_config.Column(label = "Prego"),
+                         "estribo" : st.column_config.Column(label = "Estribo"),
+                         "coluna" : st.column_config.Column(label = "Coluna"),
+                         "tela_soldada" : st.column_config.Column(label = "Tela Soldada"),
+                         "trelica" : st.column_config.Column(label = "Treliça"),
+                         "radier" : st.column_config.Column(label = "Radier"),
+                         "bba" : st.column_config.Column(label = "BBA"),
+                         "cercamento" : st.column_config.Column(label = "Cercamento"),
+                         "perfil" : st.column_config.Column(label = "Perfil"),
                      },
                      hide_index=True)
         st.download_button(

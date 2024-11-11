@@ -102,7 +102,7 @@ if authentication_status:
     page_manager = PageManager(thirty_days_ago, today, name)
     
     page_manager.add_page("Cotações com falta de Estoque", Relatorio_Estoque_Page(df_estoque, thirty_days_ago, today, name))
-    page_manager.add_page("Relatório de Inadimplência", Relatorio_Inadimplencia_Page(df_inadimplencia, six_months_ago, last_day_of_previous_month, name))
+    page_manager.add_page("Relatório de Inadimplência", Relatorio_Inadimplencia_Page(df_inadimplencia, six_months_ago, last_day_of_previous_month, name, checkbox_90_days=False))
     page_manager.add_page("Relatório de Contatos", Relatorio_Contatos_Page(df_contatos, name))
     page_manager.add_page("Relatório de Contatos - Agregado", Relatorio_ContatosAgregados_Page(df_contatos, name), allowed_users=["Gerência"])
     page_manager.add_page("Relatório de Vendas", Relatorio_Vendas_Page(df_contatos, name))
